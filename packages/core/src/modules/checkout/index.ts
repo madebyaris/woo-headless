@@ -108,7 +108,7 @@ export interface CheckoutInitOptions {
 /**
  * Main checkout service integrating all components
  */
-export class CheckoutService {
+class CheckoutService {
   private readonly client: HttpClient;
   private readonly cache: CacheManager;
   private readonly config: CheckoutConfig;
@@ -602,7 +602,4 @@ export * from './validation';
 export * from './flow';
 export * from './order';
 
-export {
-  CheckoutService as default,
-  CheckoutService
-}; 
+export { CheckoutService }; 
