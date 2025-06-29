@@ -1,0 +1,430 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+# Enhanced Unified 10X Developer Framework - Error-Free Edition
+
+## 🎯 Project Context & Architecture
+**Current Project**: WooCommerce Headless SDK (`@woo-headless/sdk`)
+**Tech Stack**: TypeScript 5.0+, Node.js 18+, Vite, Vitest, Framework-Agnostic Core
+**Architecture**: Monorepo with Core SDK + Framework Adapters (React/Vue/Svelte)
+**Core Constraints**: 100% TypeScript, No AI dependencies, No visual search, Framework agnostic
+
+## 🔒 Error Prevention Standards
+
+### **Never Hallucinate - Always Verify**
+- **RULE 1**: Never create fake APIs, libraries, or features that don't exist
+- **RULE 2**: Always check existing code before suggesting changes
+- **RULE 3**: Never assume implementation details - ask for clarification
+- **RULE 4**: If unsure about WooCommerce API, reference official docs or ask
+- **RULE 5**: Never create placeholder code without explicit user request
+
+### **Code Quality - Zero Tolerance for Errors**
+- **TypeScript Strict Mode**: Always use strict TypeScript configuration
+- **No `any` Types**: Every variable, function, and API must be properly typed
+- **Exhaustive Error Handling**: Every API call wrapped in try-catch with specific error types
+- **Validation First**: Input validation before processing, output validation before return
+- **Immutable Patterns**: Use readonly types, avoid mutations, prefer functional patterns
+
+### **Naming - Eliminate Ambiguity**
+```typescript
+// ✅ CORRECT - Specific and clear
+interface WooCommerceProductResponse {
+  readonly id: number;
+  readonly name: string;
+  readonly price: string;
+}
+
+async function fetchProductById(productId: number): Promise<WooCommerceProductResponse>
+
+// ❌ WRONG - Ambiguous and generic  
+interface Product {
+  id: any;
+  name: string;
+}
+
+function getProduct(id: any): any
+```
+
+### **Error Handling - Comprehensive Coverage**
+```typescript
+// ✅ REQUIRED Pattern
+interface WooError {
+  readonly code: 
+    | 'NETWORK_ERROR' 
+    | 'AUTH_ERROR' 
+    | 'VALIDATION_ERROR' 
+    | 'API_ERROR' 
+    | 'RATE_LIMIT_ERROR';
+  readonly message: string;
+  readonly details?: unknown;
+  readonly timestamp: Date;
+}
+
+async function apiCall<T>(request: Request): Promise<Result<T, WooError>> {
+  try {
+    const response = await fetch(request);
+    if (!response.ok) {
+      return Err({
+        code: 'API_ERROR',
+        message: `HTTP ${response.status}: ${response.statusText}`,
+        timestamp: new Date()
+      });
+    }
+    return Ok(await response.json());
+  } catch (error) {
+    return Err({
+      code: 'NETWORK_ERROR', 
+      message: error instanceof Error ? error.message : 'Unknown error',
+      timestamp: new Date()
+    });
+  }
+}
+```
+
+## 🛡️ Security & Authentication - No Compromises
+
+### **Authentication Pattern - Specific Implementation**
+```typescript
+interface AuthConfig {
+  readonly baseURL: string;
+  readonly consumerKey: string;
+  readonly consumerSecret: string;
+  readonly jwt: {
+    readonly enabled: boolean;
+    readonly secretKey?: string;
+    readonly expiresIn: number;
+  };
+}
+
+class WooAuth {
+  private readonly config: AuthConfig;
+  private tokenStore: SecureTokenStore;
+  
+  constructor(config: AuthConfig) {
+    this.config = this.validateConfig(config);
+    this.tokenStore = new SecureTokenStore();
+  }
+  
+  private validateConfig(config: AuthConfig): AuthConfig {
+    if (!config.baseURL) throw new Error('baseURL is required');
+    if (!config.consumerKey) throw new Error('consumerKey is required');
+    // ... comprehensive validation
+    return config;
+  }
+}
+```
+
+### **Input Validation - Always Sanitize**
+```typescript
+import { z } from 'zod';
+
+const ProductSearchSchema = z.object({
+  query: z.string().min(1).max(200),
+  category: z.string().optional(),
+  priceRange: z.object({
+    min: z.number().min(0),
+    max: z.number().min(0)
+  }).optional(),
+  pagination: z.object({
+    page: z.number().min(1),
+    limit: z.number().min(1).max(100)
+  })
+});
+
+type ProductSearchRequest = z.infer<typeof ProductSearchSchema>;
+
+function validateSearchRequest(input: unknown): ProductSearchRequest {
+  return ProductSearchSchema.parse(input);
+}
+```
+
+## 🎨 UI/UX Guidelines - Accessibility First
+
+### **WCAG 2.1 AA Compliance - Non-Negotiable**
+```typescript
+interface ComponentProps {
+  'aria-label'?: string;
+  'aria-describedby'?: string;
+  role?: string;
+  tabIndex?: number;
+}
+
+// ✅ Always include accessibility props
+interface SearchBoxProps extends ComponentProps {
+  onSearch: (query: string) => void;
+  placeholder?: string;
+  'aria-label': string; // Required, not optional
+}
+```
+
+### **Performance - Measurable Targets**
+- **Bundle Size**: Core SDK <60KB gzipped (measured, not estimated)
+- **API Response**: <200ms cached, <500ms uncached
+- **First Paint**: <1.2s on 3G
+- **Lighthouse Score**: >90 in all categories
+
+## 🧪 Testing - 100% Coverage Requirements
+
+### **Required Test Types**
+```typescript
+// Unit Tests - Test every function
+describe('ProductService', () => {
+  it('should fetch product by ID', async () => {
+    const mockResponse = createMockProduct({ id: 123 });
+    mockApiClient.get.mockResolvedValue(mockResponse);
+    
+    const result = await productService.getById(123);
+    
+    expect(result.isOk()).toBe(true);
+    expect(result.unwrap().id).toBe(123);
+  });
+  
+  it('should handle API errors gracefully', async () => {
+    mockApiClient.get.mockRejectedValue(new Error('Network error'));
+    
+    const result = await productService.getById(123);
+    
+    expect(result.isErr()).toBe(true);
+    expect(result.unwrapErr().code).toBe('NETWORK_ERROR');
+  });
+});
+
+// Integration Tests - Test API interactions
+describe('WooCommerce API Integration', () => {
+  it('should authenticate and fetch products', async () => {
+    const woo = new WooHeadless(testConfig);
+    const products = await woo.products.list({ limit: 5 });
+    
+    expect(products.length).toBeLessThanOrEqual(5);
+    products.forEach(product => {
+      expect(product).toMatchSchema(ProductSchema);
+    });
+  });
+});
+```
+
+### **Performance Tests - Always Benchmark**
+```typescript
+describe('Performance Tests', () => {
+  it('should load products in under 500ms', async () => {
+    const start = performance.now();
+    await woo.products.list({ limit: 20 });
+    const duration = performance.now() - start;
+    
+    expect(duration).toBeLessThan(500);
+  });
+  
+  it('should not exceed memory limits', () => {
+    const initialMemory = process.memoryUsage().heapUsed;
+    // ... perform operations
+    const finalMemory = process.memoryUsage().heapUsed;
+    const memoryIncrease = finalMemory - initialMemory;
+    
+    expect(memoryIncrease).toBeLessThan(50 * 1024 * 1024); // 50MB
+  });
+});
+```
+
+## 🚀 Development Process - Systematic Approach
+
+### **Before Writing Code - Always**
+1. **Read existing code** to understand current patterns
+2. **Check PRD/TODO** for specific requirements
+3. **Validate assumptions** by asking clarifying questions
+4. **Write types first** before implementation
+5. **Plan error scenarios** before happy path
+
+### **Code Review Checklist - Every PR**
+```markdown
+## Code Review Checklist
+- [ ] All functions have proper TypeScript types
+- [ ] Error handling implemented for all API calls
+- [ ] Input validation added where needed
+- [ ] Tests written and passing (>95% coverage)
+- [ ] No console.log or debugging code
+- [ ] Performance impact assessed
+- [ ] Accessibility compliance verified
+- [ ] Security implications reviewed
+- [ ] Breaking changes documented
+- [ ] Example usage provided
+```
+
+### **Definition of Done - Non-Negotiable**
+- [ ] Feature works as specified in PRD
+- [ ] All tests pass (unit + integration + e2e)
+- [ ] TypeScript compiles without errors or warnings
+- [ ] ESLint and Prettier pass
+- [ ] Performance targets met
+- [ ] Documentation updated
+- [ ] Example code provided
+- [ ] Accessibility tested
+- [ ] Cross-browser tested (Chrome, Firefox, Safari)
+- [ ] Bundle size impact measured
+
+## 🔍 Problem-Solving Framework - IDENTIFY → ISOLATE → FIX → VERIFY
+
+### **IDENTIFY Phase**
+1. **Reproduce the issue** with minimal test case
+2. **Gather logs and error messages** (never assume)
+3. **Check recent changes** that might have caused it
+4. **Review related code** for context
+
+### **ISOLATE Phase**
+1. **Create isolated test** that fails
+2. **Remove dependencies** to find root cause
+3. **Use debugger** instead of console.log
+4. **Document hypothesis** before testing
+
+### **FIX Phase**
+1. **Write failing test** that represents the fix
+2. **Implement minimal change** to make test pass
+3. **Ensure no regressions** by running full test suite
+4. **Add error handling** for edge cases
+
+### **VERIFY Phase**
+1. **Test in multiple environments** (dev, staging)
+2. **Performance impact assessment**
+3. **Security implications review**
+4. **Documentation update**
+
+## 📋 Quick Commands - Instant Mode Switch
+
+### **FOCUS MODE** - Single Task Excellence
+- Disable all notifications and distractions
+- Focus on one specific TODO item
+- Complete with full testing and documentation
+- No context switching until done
+
+### **DEBUG MODE** - Systematic Investigation  
+- Reproduce issue with minimal test case
+- Use proper debugging tools (not console.log)
+- Follow IDENTIFY → ISOLATE → FIX → VERIFY
+- Document solution for future reference
+
+### **OPTIMIZE MODE** - Performance Excellence
+- Profile before optimizing (never guess)
+- Measure actual performance impact
+- Optimize critical path first
+- Maintain code readability
+
+### **SECURE MODE** - Security Assessment
+- Review all user inputs for validation
+- Check authentication and authorization
+- Verify data encryption and transmission
+- Audit dependencies for vulnerabilities
+
+### **DESIGN MODE** - Accessibility & UX
+- Test with screen readers
+- Verify keyboard navigation
+- Check color contrast ratios
+- Test on mobile devices
+
+## 🎯 WooCommerce SDK Specific Rules
+
+### **API Integration - Never Assume**
+```typescript
+// ✅ Always validate WooCommerce responses
+interface WooCommerceProduct {
+  readonly id: number;
+  readonly name: string;
+  readonly slug: string;
+  readonly status: 'draft' | 'pending' | 'private' | 'publish';
+  readonly featured: boolean;
+  readonly catalog_visibility: 'visible' | 'catalog' | 'search' | 'hidden';
+  readonly description: string;
+  readonly short_description: string;
+  readonly price: string;
+  readonly regular_price: string;
+  readonly sale_price: string;
+  // ... complete interface matching WooCommerce API
+}
+
+function validateWooCommerceProduct(data: unknown): WooCommerceProduct {
+  return WooCommerceProductSchema.parse(data);
+}
+```
+
+### **Search Implementation - No Complexity Creep**
+- **Text search only** - no AI, no visual search
+- **Fuzzy matching** using proven libraries (Fuse.js)
+- **Faceted filtering** with clear operators
+- **Performance monitoring** for all search queries
+- **Cache strategy** for frequent searches
+
+### **Framework Agnostic - Core First**
+```typescript
+// ✅ Core SDK - Framework independent
+class WooHeadless {
+  constructor(config: WooConfig) {
+    this.validateConfig(config);
+  }
+  
+  readonly products = new ProductService(this.client);
+  readonly search = new SearchService(this.client);
+  readonly cart = new CartService(this.client);
+  readonly auth = new AuthService(this.client);
+}
+
+// ✅ React Adapter - Thin wrapper
+export function useProducts() {
+  const woo = useWooCommerce();
+  return useQuery(['products'], () => woo.products.list());
+}
+
+// ✅ Vue Adapter - Thin wrapper  
+export function useProducts() {
+  const woo = inject(WooCommerceSymbol);
+  return useQuery(['products'], () => woo.products.list());
+}
+```
+
+## 🎪 Success Metrics - Measurable Only
+
+### **Technical Excellence**
+- **Zero TypeScript errors** in production builds
+- **Test coverage >95%** for all core modules
+- **Bundle size <60KB** gzipped for core SDK
+- **API response time <200ms** for cached requests
+- **Error rate <0.1%** in production
+
+### **Developer Experience**
+- **Setup time <15 minutes** from npm install to working example
+- **Documentation coverage 100%** for public APIs
+- **GitHub issues response <24 hours**
+- **Community satisfaction >4.5/5** stars
+
+---
+
+## 🚨 Red Flags - Never Do This
+
+### **Code Red Flags**
+❌ Using `any` type in TypeScript  
+❌ Catching errors without proper handling  
+❌ Making API calls without timeout  
+❌ Creating components without accessibility props  
+❌ Writing functions without tests  
+❌ Hardcoding configuration values  
+❌ Using deprecated WooCommerce API endpoints  
+
+### **Architecture Red Flags**
+❌ Adding AI dependencies to core SDK  
+❌ Making framework-specific code in core  
+❌ Creating circular dependencies  
+❌ Ignoring bundle size impact  
+❌ Skipping performance testing  
+❌ Building without security review  
+
+### **Process Red Flags**
+❌ Shipping without documentation  
+❌ Merging without code review  
+❌ Deploying without tests passing  
+❌ Making breaking changes without migration guide  
+❌ Adding features not in PRD without approval  
+
+---
+
+**Framework Version**: 2.0 Enhanced
+**Next Review**: After each major milestone  
+**Compliance**: 100% Required for all code 
