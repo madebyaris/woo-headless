@@ -310,9 +310,10 @@ export class LocalStorageCache implements CacheStorage {
 
     // Remove oldest 25% of entries
     const removeCount = Math.ceil(entries.length * 0.25);
-    for (let i = 0; i < removeCount; i++) {
-      if (entries[i]) {
-        localStorage.removeItem(entries[i][0]);
+    for (let i = 0; i < removeCount && i < entries.length; i++) {
+      const entry = entries[i];
+      if (entry && entry[0]) {
+        localStorage.removeItem(entry[0]);
       }
     }
   }
@@ -689,9 +690,11 @@ export class CacheManager {
     // Promote to all layers above where it was found
     for (let i = 0; i < foundIndex; i++) {
       const layerName = layerOrder[i];
-      const layer = this.layers.get(layerName);
-      if (layer) {
-        await layer.set(key, value, this.config.ttl);
+      if (layerName) {
+        const layer = this.layers.get(layerName);
+        if (layer) {
+          await layer.set(key, value, this.config.ttl);
+        }
       }
     }
   }
