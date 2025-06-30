@@ -43,9 +43,11 @@ async function testWooCommerceAPI() {
       // Show first product details
       if (productsResult.data.products.length > 0) {
         const firstProduct = productsResult.data.products[0];
-        console.log(`🛍️  First product: "${firstProduct.name}" (ID: ${firstProduct.id})`);
-        console.log(`💰 Price: $${firstProduct.price}`);
-        console.log(`📝 Status: ${firstProduct.status}`);
+        if (firstProduct) {
+          console.log(`🛍️  First product: "${firstProduct.name}" (ID: ${firstProduct.id})`);
+          console.log(`💰 Price: $${firstProduct.price}`);
+          console.log(`📝 Status: ${firstProduct.status}`);
+        }
       }
     } else {
       console.error('❌ Failed to fetch products:', productsResult.error.message);
@@ -73,7 +75,12 @@ async function testWooCommerceAPI() {
 
     // Test 3: Get Single Product
     if (isOk(productsResult) && productsResult.data.products.length > 0) {
-      const productId = productsResult.data.products[0].id;
+      const firstProduct = productsResult.data.products[0];
+      if (!firstProduct) {
+        console.log('⚠️  No product available for single product test');
+        return;
+      }
+      const productId = firstProduct.id;
       console.log(`📋 Testing Single Product Fetch (ID: ${productId})...`);
       
       const singleProductResult = await woo.products.get(productId);
@@ -100,24 +107,29 @@ async function testWooCommerceAPI() {
       console.log(`💰 Cart total: $${cartResult.data.totals.total}`);
       
       // Try to add a product to cart (if we have products)
-      if (isOk(productsResult) && productsResult.data.products.length > 0) {
-        const productToAdd = productsResult.data.products[0];
-        console.log(`🛍️  Attempting to add "${productToAdd.name}" to cart...`);
-        
-        const addResult = await woo.cart.addItem({
-          productId: productToAdd.id,
-          quantity: 1
-        });
-        
-        if (isOk(addResult)) {
-          console.log(`✅ Successfully added product to cart!`);
-          console.log(`🛒 Cart now has ${addResult.data.items.length} items`);
-          console.log(`💰 New cart total: $${addResult.data.totals.total}`);
-        } else {
-          console.log(`⚠️  Could not add product to cart: ${addResult.error.message}`);
-          console.log('   This might be normal if the product is out of stock or has restrictions');
+              if (isOk(productsResult) && productsResult.data.products.length > 0) {
+          const productToAdd = productsResult.data.products[0];
+          if (!productToAdd) {
+            console.log('⚠️  No product available for cart test');
+          } else {
+            console.log(`🛍️  Attempting to add "${productToAdd.name}" to cart...`);
+            
+            const addResult = await woo.cart.addItem({
+              productId: productToAdd.id,
+              quantity: 1,
+              variationId: undefined
+            });
+            
+            if (isOk(addResult)) {
+              console.log(`✅ Successfully added product to cart!`);
+              console.log(`🛒 Cart now has ${addResult.data.items.length} items`);
+              console.log(`💰 New cart total: $${addResult.data.totals.total}`);
+            } else {
+              console.log(`⚠️  Could not add product to cart: ${addResult.error.message}`);
+              console.log('   This might be normal if the product is out of stock or has restrictions');
+            }
+          }
         }
-      }
     } else {
       console.error('❌ Failed to initialize cart:', cartResult.error.message);
     }
