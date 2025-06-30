@@ -125,10 +125,37 @@ class SearchAnalyticsManager {
 }
 
 /**
+ * Mutable query builder state interface
+ */
+interface MutableSearchQuery {
+  text?: string;
+  filters: SearchFilter[];
+  rangeFilters: RangeFilter[];
+  categoryIds?: number[];
+  tagIds?: number[];
+  productIds?: number[];
+  excludeProductIds?: number[];
+  inStock?: boolean;
+  onSale?: boolean;
+  featured?: boolean;
+  minPrice?: number;
+  maxPrice?: number;
+  minRating?: number;
+  attributes?: Record<string, string | string[]>;
+  sort: SearchSort[];
+  pagination: SearchPagination;
+  operator: SearchOperator;
+  fuzzy: boolean;
+  highlight: boolean;
+  facets: boolean;
+  suggestions: boolean;
+}
+
+/**
  * Search query builder implementation
  */
 class SearchQueryBuilderImpl implements SearchQueryBuilder {
-  private query: Partial<SearchQuery> = {
+  private query: MutableSearchQuery = {
     filters: [],
     rangeFilters: [],
     sort: [],
@@ -152,16 +179,19 @@ class SearchQueryBuilderImpl implements SearchQueryBuilder {
   }
 
   filter(field: string, operator: FilterOperator, value: unknown): SearchQueryBuilder {
-    const filters = [...(this.query.filters || [])];
-    filters.push({ field, operator, value });
-    this.query.filters = filters;
+    this.query.filters.push({ field, operator, value });
     return this;
   }
 
   range(field: string, min?: number, max?: number): SearchQueryBuilder {
-    const rangeFilters = [...(this.query.rangeFilters || [])];
-    rangeFilters.push({ field, min, max });
-    this.query.rangeFilters = rangeFilters;
+    if (min !== undefined || max !== undefined) {
+      const rangeFilter: RangeFilter = { 
+        field,
+        ...(min !== undefined && { min }),
+        ...(max !== undefined && { max })
+      };
+      this.query.rangeFilters.push(rangeFilter);
+    }
     return this;
   }
 
@@ -176,8 +206,8 @@ class SearchQueryBuilderImpl implements SearchQueryBuilder {
   }
 
   price(min?: number, max?: number): SearchQueryBuilder {
-    this.query.minPrice = min;
-    this.query.maxPrice = max;
+    if (min !== undefined) this.query.minPrice = min;
+    if (max !== undefined) this.query.maxPrice = max;
     return this;
   }
 
@@ -202,38 +232,33 @@ class SearchQueryBuilderImpl implements SearchQueryBuilder {
   }
 
   attribute(name: string, value: string | string[]): SearchQueryBuilder {
-    const attributes = { ...(this.query.attributes || {}) };
-    attributes[name] = value;
-    this.query.attributes = attributes;
+    if (!this.query.attributes) {
+      this.query.attributes = {};
+    }
+    this.query.attributes[name] = value;
     return this;
   }
 
   sort(field: string, direction: SortDirection = 'asc'): SearchQueryBuilder {
-    const sortFields = [...(this.query.sort || [])];
-    sortFields.push({ field, direction });
-    this.query.sort = sortFields;
+    this.query.sort.push({ field, direction });
     return this;
   }
 
   page(pageNum: number): SearchQueryBuilder {
-    if (this.query.pagination) {
-      this.query.pagination = {
-        ...this.query.pagination,
-        page: pageNum,
-        offset: (pageNum - 1) * this.query.pagination.limit
-      };
-    }
+    this.query.pagination = {
+      ...this.query.pagination,
+      page: pageNum,
+      offset: (pageNum - 1) * this.query.pagination.limit
+    };
     return this;
   }
 
   limit(limitNum: number): SearchQueryBuilder {
-    if (this.query.pagination) {
-      this.query.pagination = {
-        ...this.query.pagination,
-        limit: limitNum,
-        offset: (this.query.pagination.page - 1) * limitNum
-      };
-    }
+    this.query.pagination = {
+      ...this.query.pagination,
+      limit: limitNum,
+      offset: (this.query.pagination.page - 1) * limitNum
+    };
     return this;
   }
 
@@ -258,29 +283,29 @@ class SearchQueryBuilderImpl implements SearchQueryBuilder {
   }
 
   build(): SearchQuery {
-    // Validate and return complete query
-    const completeQuery = {
-      text: this.query.text,
-      filters: this.query.filters || [],
-      rangeFilters: this.query.rangeFilters || [],
-      categoryIds: this.query.categoryIds,
-      tagIds: this.query.tagIds,
-      productIds: this.query.productIds,
-      excludeProductIds: this.query.excludeProductIds,
+    // Convert mutable query to readonly SearchQuery
+    const completeQuery: SearchQuery = {
+      text: this.query.text || '',
+      filters: [...this.query.filters],
+      rangeFilters: [...this.query.rangeFilters],
+      ...(this.query.categoryIds && { categoryIds: [...this.query.categoryIds] }),
+      ...(this.query.tagIds && { tagIds: [...this.query.tagIds] }),
+      ...(this.query.productIds && { productIds: [...this.query.productIds] }),
+      ...(this.query.excludeProductIds && { excludeProductIds: [...this.query.excludeProductIds] }),
       inStock: this.query.inStock,
       onSale: this.query.onSale,
       featured: this.query.featured,
       minPrice: this.query.minPrice,
       maxPrice: this.query.maxPrice,
       minRating: this.query.minRating,
-      attributes: this.query.attributes,
-      sort: this.query.sort || [],
-      pagination: this.query.pagination!,
-      operator: this.query.operator || 'AND',
-      fuzzy: this.query.fuzzy !== undefined ? this.query.fuzzy : true,
-      highlight: this.query.highlight !== undefined ? this.query.highlight : true,
-      facets: this.query.facets !== undefined ? this.query.facets : true,
-      suggestions: this.query.suggestions !== undefined ? this.query.suggestions : true
+      attributes: this.query.attributes ? { ...this.query.attributes } : undefined,
+      sort: [...this.query.sort],
+      pagination: { ...this.query.pagination },
+      operator: this.query.operator,
+      fuzzy: this.query.fuzzy,
+      highlight: this.query.highlight,
+      facets: this.query.facets,
+      suggestions: this.query.suggestions
     };
 
     return completeQuery;

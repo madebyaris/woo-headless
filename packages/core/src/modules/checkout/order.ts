@@ -6,7 +6,7 @@
 
 import { HttpClient } from '../../core/client';
 import { CacheManager } from '../../core/cache';
-import { Result, Ok, Err, isErr, isOk, unwrap, unwrapErr } from '../../types/result';
+import { Result, Ok, Err, isErr, unwrap, unwrapErr } from '../../types/result';
 import { WooError, ErrorFactory } from '../../types/errors';
 import { 
   Order,
@@ -17,7 +17,7 @@ import {
   BillingAddress,
   ShippingAddress
 } from '../../types/checkout';
-import { Cart, CartItem } from '../../types/cart';
+import { Cart } from '../../types/cart';
 
 /**
  * Order creation request
@@ -157,7 +157,7 @@ export class OrderProcessingService {
       // Update inventory
       if (this.config.autoUpdateInventory) {
         await this.updateInventory({
-          orderId: order.id,
+          orderId: order.id.toString(),
           items: request.cart.items.map(item => ({
             productId: item.productId,
             variationId: item.variationId,

@@ -37,6 +37,7 @@ export interface CartItem {
   readonly regularPrice: number;
   readonly salePrice?: number;
   readonly totalPrice: number; // price * quantity
+  readonly total: number; // alias for totalPrice
   readonly sku?: string;
   readonly weight?: number;
   readonly dimensions?: {
@@ -75,6 +76,11 @@ export interface CartTotals {
   readonly feeTax: number;
   readonly total: number;
   readonly totalTax: number;
+  // Legacy aliases for backward compatibility and validation code
+  readonly tax: number; // alias for totalTax
+  readonly shipping: number; // alias for shippingTotal  
+  readonly fees: number; // alias for feeTotal
+  readonly discount: number; // alias for discountTotal
 }
 
 /**
@@ -335,6 +341,7 @@ export const CartItemSchema = z.object({
   regularPrice: z.number().min(0),
   salePrice: z.number().min(0).optional(),
   totalPrice: z.number().min(0),
+  total: z.number().min(0),
   sku: z.string().optional(),
   weight: z.number().min(0).optional(),
   dimensions: z.object({

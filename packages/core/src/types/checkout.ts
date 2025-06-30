@@ -62,6 +62,7 @@ export interface CountryConfig {
 export type PaymentMethodType = 
   | 'credit_card'
   | 'stripe'
+  | 'stripe_checkout'
   | 'paypal' 
   | 'apple_pay'
   | 'google_pay'
@@ -92,8 +93,11 @@ export interface PaymentMethod {
   readonly testMode: boolean;
   readonly settings: Record<string, unknown>;
   readonly supportedCountries?: readonly string[];
+  readonly supportedCurrencies?: readonly string[];
   readonly minimumAmount?: number;
   readonly maximumAmount?: number;
+  readonly icon?: string;
+  readonly acceptedCards?: readonly string[];
 }
 
 /**
@@ -199,6 +203,8 @@ export interface Order {
   readonly number: string;
   readonly status: OrderStatus;
   readonly currency: string;
+  readonly dateCreated: Date;
+  readonly dateModified: Date;
   readonly total: number;
   readonly subtotal: number;
   readonly totalTax: number;
@@ -206,6 +212,7 @@ export interface Order {
   readonly shippingTax: number;
   readonly discountTotal: number;
   readonly discountTax: number;
+  readonly feeTotal: number;
   readonly customerId: number;
   readonly customerNote?: string;
   readonly billingAddress: BillingAddress;
@@ -262,7 +269,7 @@ export interface CheckoutFlow {
 }
 
 /**
- * Checkout session data
+ * Checkout session state
  */
 export interface CheckoutSession {
   readonly id: string;
@@ -270,8 +277,13 @@ export interface CheckoutSession {
   readonly customerId?: number;
   readonly billingAddress?: BillingAddress;
   readonly shippingAddress?: ShippingAddress;
-  readonly shippingMethod?: SelectedShippingMethod;
-  readonly paymentMethod?: PaymentMethodType;
+  readonly useShippingAsBilling?: boolean;
+  readonly selectedShippingMethod?: SelectedShippingMethod;
+  readonly selectedPaymentMethod?: PaymentMethod;
+  readonly orderNotes?: string;
+  readonly termsAccepted?: boolean;
+  readonly newsletterOptIn?: boolean;
+  readonly isGuestCheckout?: boolean;
   readonly orderTotals: OrderTotals;
   readonly flow: CheckoutFlow;
   readonly expiresAt: Date;
@@ -285,6 +297,7 @@ export interface CheckoutSession {
 export interface CheckoutValidationRules {
   readonly requireShippingAddress: boolean;
   readonly requireBillingAddress: boolean;
+  readonly requireEmail?: boolean;
   readonly requirePhoneNumber: boolean;
   readonly requireCompanyName: boolean;
   readonly allowGuestCheckout: boolean;
@@ -410,7 +423,7 @@ export function isValidCheckoutStep(step: string): step is CheckoutStepType {
 }
 
 export function isValidPaymentMethod(method: string): method is PaymentMethodType {
-  return ['credit_card', 'stripe', 'paypal', 'apple_pay', 'google_pay', 'bank_transfer', 'cash_on_delivery', 'check'].includes(method);
+  return ['credit_card', 'stripe', 'stripe_checkout', 'paypal', 'apple_pay', 'google_pay', 'bank_transfer', 'cash_on_delivery', 'check'].includes(method);
 }
 
 /**
@@ -579,3 +592,19 @@ export const DEFAULT_CHECKOUT_CONFIG: Partial<CheckoutConfig> = {
     requiredFields: ['firstName', 'lastName', 'address1', 'city', 'state', 'postcode', 'country', 'email']
   }
 };
+
+/**
+ * Payment transaction details
+ */
+export interface PaymentTransaction {
+  readonly id: string;
+  readonly paymentId: string;
+  readonly amount: number;
+  readonly currency: string;
+  readonly status: 'pending' | 'completed' | 'failed' | 'cancelled';
+  readonly method: PaymentMethodType;
+  readonly transactionId?: string;
+  readonly gatewayResponse?: Record<string, unknown>;
+  readonly processedAt?: Date;
+  readonly failureReason?: string;
+}
