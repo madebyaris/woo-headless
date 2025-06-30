@@ -29,6 +29,7 @@ import {
   AutoCompleteResponse,
   FilterOperator,
   SortDirection,
+  SearchSort,
   SearchOperator,
   SearchQuerySchema,
   isSearchQuery

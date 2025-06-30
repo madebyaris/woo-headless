@@ -300,7 +300,10 @@ export class CartSyncManager {
    * Enable cart synchronization
    */
   enable(): void {
-    this.config.enabled = true;
+    this.config = {
+      ...this.config,
+      enabled: true
+    };
     this.setupBackgroundSync();
   }
 
@@ -308,7 +311,10 @@ export class CartSyncManager {
    * Disable cart synchronization
    */
   disable(): void {
-    this.config.enabled = false;
+    this.config = {
+      ...this.config,
+      enabled: false
+    };
     this.stopBackgroundSync();
   }
 

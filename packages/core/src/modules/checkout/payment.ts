@@ -14,7 +14,12 @@ import {
   PaymentTransaction,
   CreditCard,
   Order,
-  OrderTotals
+  OrderTotals,
+  PaymentRequest,
+  PaymentInitRequest,
+  PaymentStatusRequest,
+  PaymentCallbackData,
+  CheckoutSession
 } from '../../types/checkout';
 
 /**
@@ -29,19 +34,6 @@ export interface PaymentMethodsResponse {
 
 /**
  * Payment initialization request
- */
-export interface PaymentInitRequest {
-  readonly paymentMethodId: string;
-  readonly orderId: string;
-  readonly amount: number;
-  readonly currency: string;
-  readonly returnUrl: string;
-  readonly cancelUrl: string;
-  readonly metadata?: Record<string, unknown>;
-}
-
-/**
- * Payment initialization response
  */
 export interface PaymentInitResponse {
   readonly paymentId: string;
@@ -67,18 +59,6 @@ export interface PaymentStatusResponse {
     readonly url?: string;
     readonly data?: Record<string, unknown>;
   };
-}
-
-/**
- * Payment callback data
- */
-export interface PaymentCallbackData {
-  readonly paymentId: string;
-  readonly orderId: string;
-  readonly status: string;
-  readonly transactionId?: string;
-  readonly signature?: string;
-  readonly metadata?: Record<string, unknown>;
 }
 
 /**
@@ -592,7 +572,7 @@ export class PaymentFlowManager {
       await new Promise(resolve => setTimeout(resolve, intervalMs));
     }
 
-    return Err(ErrorFactory.timeoutError('Payment status polling timeout'));
+    return Err(ErrorFactory.timeoutError('Payment status polling timeout', 30000));
   }
 
   /**

@@ -30,16 +30,16 @@ export interface CartItemMeta {
 export interface CartItem {
   readonly key: string; // Unique identifier for cart item
   readonly productId: number;
-  readonly variationId?: number;
+  readonly variationId: number | undefined; // Allow undefined explicitly
   readonly quantity: number;
   readonly name: string;
   readonly price: number; // Unit price
   readonly regularPrice: number;
-  readonly salePrice?: number;
+  readonly salePrice: number | undefined; // Allow undefined explicitly
   readonly totalPrice: number; // price * quantity
   readonly total: number; // alias for totalPrice
-  readonly sku?: string;
-  readonly weight?: number;
+  readonly sku: string | undefined; // Allow undefined explicitly
+  readonly weight: number | undefined; // Allow undefined explicitly
   readonly dimensions?: {
     readonly length: string;
     readonly width: string;
@@ -50,7 +50,7 @@ export interface CartItem {
     readonly src: string;
     readonly alt: string;
   };
-  readonly stockQuantity?: number;
+  readonly stockQuantity: number | undefined; // Allow undefined explicitly
   readonly stockStatus: 'instock' | 'outofstock' | 'onbackorder';
   readonly backorders: 'no' | 'notify' | 'yes';
   readonly quantityLimits?: CartQuantityLimits;
@@ -58,6 +58,10 @@ export interface CartItem {
   readonly attributes?: Record<string, string>;
   readonly addedAt: Date;
   readonly updatedAt: Date;
+  readonly backordersAllowed: boolean;
+  readonly soldIndividually: boolean;
+  readonly downloadable: boolean;
+  readonly virtual: boolean;
 }
 
 /**
@@ -177,7 +181,12 @@ export interface CartUpdateRequest {
 /**
  * Cart add item request
  */
-export interface CartAddItemRequest extends CartUpdateRequest {
+export interface CartAddItemRequest {
+  readonly productId: number;
+  readonly variationId: number | undefined; // Allow undefined explicitly
+  readonly quantity: number;
+  readonly attributes?: Record<string, string>;
+  readonly meta?: readonly CartItemMeta[];
   readonly replace?: boolean; // Replace existing item instead of adding to quantity
 }
 

@@ -617,3 +617,98 @@ export interface PaymentTransaction {
   readonly processedAt?: Date;
   readonly failureReason?: string;
 }
+
+/**
+ * Payment initialization response
+ */
+export interface PaymentInitResponse {
+  readonly paymentId: string;
+  readonly redirectUrl: string | undefined; // Allow undefined explicitly
+  readonly requiresRedirect: boolean;
+  readonly clientSecret: string | undefined; // Allow undefined explicitly
+  readonly paymentIntentId: string | undefined; // Allow undefined explicitly
+  readonly instructions: string | undefined; // Allow undefined explicitly
+  readonly expiresAt: Date | undefined; // Allow undefined explicitly
+}
+
+/**
+ * Payment status response
+ */
+export interface PaymentStatusResponse {
+  readonly paymentId: string;
+  readonly status: PaymentStatus;
+  readonly transactionId: string | undefined; // Allow undefined explicitly
+  readonly failureReason: string | undefined; // Allow undefined explicitly
+  readonly redirectUrl: string | undefined; // Allow undefined explicitly
+  readonly nextAction: {
+    readonly type: 'redirect' | 'authenticate' | 'confirm';
+    readonly url?: string;
+    readonly data?: Record<string, unknown>;
+  } | undefined; // Allow undefined explicitly
+}
+
+/**
+ * Payment status enumeration
+ */
+export type PaymentStatus = 
+  | 'pending'
+  | 'processing' 
+  | 'completed'
+  | 'failed'
+  | 'cancelled'
+  | 'refunded'
+  | 'requires_action';
+
+/**
+ * Payment request interface
+ */
+export interface PaymentRequest {
+  readonly orderId: string;
+  readonly amount: number;
+  readonly currency: string;
+  readonly paymentMethod: string;
+  readonly returnUrl?: string;
+  readonly metadata?: Record<string, unknown>;
+}
+
+/**
+ * Payment initialization request
+ */
+export interface PaymentInitRequest {
+  readonly paymentMethodId: string;
+  readonly orderId: string;
+  readonly amount: number;
+  readonly currency: string;
+  readonly returnUrl: string;
+  readonly cancelUrl: string;
+  readonly metadata?: Record<string, unknown>;
+}
+
+/**
+ * Payment status request
+ */
+export interface PaymentStatusRequest {
+  readonly paymentId: string;
+  readonly orderId: string;
+}
+
+/**
+ * Payment callback data
+ */
+export interface PaymentCallbackData {
+  readonly paymentId: string;
+  readonly orderId: string;
+  readonly status: string;
+  readonly transactionId?: string;
+  readonly signature?: string;
+  readonly metadata?: Record<string, unknown>;
+}
+
+/**
+ * Checkout validation result interface
+ */
+export interface CheckoutValidationResult {
+  readonly isValid: boolean;
+  readonly errors: readonly CheckoutError[];
+  readonly warnings: readonly CheckoutError[];
+}

@@ -6,18 +6,11 @@
 
 import { Result, Ok, Err, isErr, isOk, unwrap, unwrapErr } from '../../types/result';
 import { WooError, ErrorFactory } from '../../types/errors';
-import { 
-  CheckoutFormData,
+import {
   CheckoutValidationRules,
-  CheckoutSession,
-  BillingAddress,
-  ShippingAddress,
-  SelectedShippingMethod,
-  PaymentMethod,
-  Order,
-  OrderTotals,
-  CheckoutErrorCode,
-  CheckoutError
+  CheckoutValidationResult,
+  CheckoutValidationContext,
+  CheckoutSession
 } from '../../types/checkout';
 import { Cart, CartItem } from '../../types/cart';
 import { AddressManager, AddressValidationContext } from './address';

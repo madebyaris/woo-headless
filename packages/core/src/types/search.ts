@@ -151,19 +151,19 @@ export interface SearchPagination {
  * Search query configuration
  */
 export interface SearchQuery {
-  readonly text?: string;
+  readonly text: string | undefined;
   readonly filters: readonly SearchFilter[];
   readonly rangeFilters: readonly RangeFilter[];
   readonly categoryIds?: readonly number[];
   readonly tagIds?: readonly number[];
   readonly productIds?: readonly number[];
   readonly excludeProductIds?: readonly number[];
-  readonly inStock?: boolean;
-  readonly onSale?: boolean;
-  readonly featured?: boolean;
-  readonly minPrice?: number;
-  readonly maxPrice?: number;
-  readonly minRating?: number;
+  readonly inStock: boolean | undefined;
+  readonly onSale: boolean | undefined;
+  readonly featured: boolean | undefined;
+  readonly minPrice: number | undefined;
+  readonly maxPrice: number | undefined;
+  readonly minRating: number | undefined;
   readonly attributes?: Record<string, string | string[]>;
   readonly sort: readonly SearchSort[];
   readonly pagination: SearchPagination;
@@ -198,7 +198,7 @@ export interface SearchResults {
  */
 export interface SearchAnalyticsEvent {
   readonly type: 'search' | 'filter' | 'sort' | 'paginate' | 'suggestion_click' | 'result_click';
-  readonly query?: string;
+  readonly query: string | undefined;
   readonly filters?: readonly SearchFilter[];
   readonly resultPosition?: number;
   readonly productId?: number;

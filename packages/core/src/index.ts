@@ -86,4 +86,38 @@ export { UserService } from './modules/user';
 export { WooHeadless } from './woo-headless';
 
 // Version
-export const VERSION = '1.0.0'; 
+export const VERSION = '1.0.0';
+
+// Export commerce types
+export {
+  // Types
+  type ProductStatus,
+  type ProductCatalogVisibility,
+  type ProductType,
+  type OrderStatus,
+  type ImageDimensions,
+  type ProductImage,
+  type ProductCategory,
+  type ProductTag,
+  type ProductAttribute,
+  type PriceRange,
+  type ProductDimensions,
+  type MetaData,
+  type WooCommerceProduct,
+  type ProductVariation,
+  type BillingAddress,
+  type ShippingAddress,
+  type OrderLineItem,
+  type WooCommerceOrder,
+  type WooCommerceCustomer,
+  type WooCommerceCoupon,
+  
+  // Schemas
+  ProductSchema,
+  OrderSchema,
+  
+  // Type guards
+  isWooCommerceProduct,
+  isWooCommerceOrder,
+  isWooCommerceCoupon
+} from './types/commerce'; 

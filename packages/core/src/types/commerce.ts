@@ -346,6 +346,39 @@ export interface WooCommerceCustomer {
 }
 
 /**
+ * WooCommerce coupon interface following REST API v3
+ */
+export interface WooCommerceCoupon {
+  readonly id: number;
+  readonly code: string;
+  readonly amount: string;
+  readonly date_created: string;
+  readonly date_created_gmt: string;
+  readonly date_modified: string;
+  readonly date_modified_gmt: string;
+  readonly discount_type: 'percent' | 'fixed_cart' | 'fixed_product';
+  readonly description: string;
+  readonly date_expires?: string;
+  readonly date_expires_gmt?: string;
+  readonly usage_count: number;
+  readonly individual_use: boolean;
+  readonly product_ids: readonly number[];
+  readonly excluded_product_ids: readonly number[];
+  readonly usage_limit?: number;
+  readonly usage_limit_per_user?: number;
+  readonly limit_usage_to_x_items?: number;
+  readonly free_shipping: boolean;
+  readonly product_categories: readonly number[];
+  readonly excluded_product_categories: readonly number[];
+  readonly exclude_sale_items: boolean;
+  readonly minimum_amount: string;
+  readonly maximum_amount: string;
+  readonly email_restrictions: readonly string[];
+  readonly used_by: readonly string[];
+  readonly meta_data: readonly MetaData[];
+}
+
+/**
  * Zod schemas for validation
  */
 export const ProductSchema = z.object({
@@ -417,4 +450,12 @@ export function isWooCommerceOrder(data: unknown): data is WooCommerceOrder {
   } catch {
     return false;
   }
+}
+
+/**
+ * Type guard for WooCommerceCoupon
+ */
+export function isWooCommerceCoupon(data: unknown): data is WooCommerceCoupon {
+  return typeof data === 'object' && data !== null && 
+    'id' in data && 'code' in data && 'amount' in data && 'discount_type' in data;
 } 

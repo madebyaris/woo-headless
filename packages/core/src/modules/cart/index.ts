@@ -5,9 +5,12 @@
 
 import { HttpClient } from '../../core/client';
 import { CacheManager } from '../../core/cache';
-import { Result, Ok, Err } from '../../types/result';
+import { Result, Ok, Err, isErr, unwrap } from '../../types/result';
 import { WooError, ErrorFactory } from '../../types/errors';
-import { WooCommerceProduct } from '../../types/commerce';
+import { 
+  WooCommerceProduct,
+  WooCommerceCoupon
+} from '../../types/commerce';
 import {
   Cart,
   CartItem,
@@ -918,40 +921,38 @@ export class CartService {
   /**
    * Remove item from cart
    */
-  async removeItem(itemKey: string): Promise<Result<Cart, WooError>> {
+  async removeItem(itemKey: string): Promise<Result<void, WooError>> {
     try {
-      // Get current cart
-      const cartResult = await this.getCart();
-      if (!cartResult.success) {
-        return cartResult;
+      const cart = await this.getCart();
+      if (isErr(cart)) {
+        return cart;
       }
 
-      const cart = cartResult.data;
-      const updatedItems = cart.items.filter(item => item.key !== itemKey);
-
-      if (updatedItems.length === cart.items.length) {
-        return Err(ErrorFactory.cartError(
-          'Item not found in cart',
-          { itemKey }
-        ));
+      const cartData = unwrap(cart);
+      const itemIndex = cartData.items.findIndex(item => item.key === itemKey);
+      
+      if (itemIndex === -1) {
+        return Err(ErrorFactory.validationError('Cart item not found'));
       }
 
-      // Create updated cart
-      const updatedCart = this.updateCartWithItems(cart, updatedItems);
+      // Remove item from items array
+      const updatedItems = cartData.items.filter((_, index) => index !== itemIndex);
+      
+      // Calculate new totals
+      const newTotals = await this.calculateTotals(updatedItems);
+      
+      const updatedCart: Cart = {
+        ...cartData,
+        items: updatedItems,
+        totals: newTotals.isOk() ? newTotals.data : cartData.totals,
+        updatedAt: new Date()
+      };
 
-      // Save cart
-      const saveResult = await this.persistence.save(updatedCart);
-      if (!saveResult.success) {
-        return saveResult;
-      }
-
-      this.currentCart = updatedCart;
-      return Ok(updatedCart);
-
+      await this.saveCart(updatedCart);
+      return Ok(undefined);
     } catch (error) {
-      return Err(ErrorFactory.cartError(
-        'Failed to remove cart item',
-        error
+      return Err(ErrorFactory.networkError(
+        error instanceof Error ? error.message : 'Failed to remove cart item'
       ));
     }
   }
@@ -991,29 +992,41 @@ export class CartService {
       }
 
       const cart = cartResult.data;
-      const errors: CartValidationResult['errors'] = [];
-      const warnings: CartValidationResult['warnings'] = [];
+      // Create mutable arrays for building validation results
+      const mutableErrors: Array<{
+        readonly itemKey: string;
+        readonly code: 'PRODUCT_NOT_FOUND' | 'OUT_OF_STOCK' | 'INSUFFICIENT_STOCK' | 'INVALID_QUANTITY' | 'VARIATION_NOT_FOUND';
+        readonly message: string;
+        readonly currentStock?: number;
+        readonly requestedQuantity?: number;
+      }> = [];
+      
+      const mutableWarnings: Array<{
+        readonly itemKey: string;
+        readonly code: 'LOW_STOCK' | 'BACKORDER' | 'PRICE_CHANGED';
+        readonly message: string;
+        readonly details?: Record<string, unknown>;
+      }> = [];
 
       // Validate each cart item
       for (const item of cart.items) {
-        await this.validateCartItem(item, errors, warnings);
+        await this.validateCartItem(item, mutableErrors, mutableWarnings);
       }
 
       // Validate cart-level constraints
-      await this.validateCartConstraints(cart, errors, warnings);
+      await this.validateCartConstraints(cart, mutableErrors, mutableWarnings);
 
       // Validate applied coupons
-      await this.validateAppliedCoupons(cart, errors, warnings);
+      await this.validateAppliedCoupons(cart, mutableErrors, mutableWarnings);
 
       // Validate cart totals integrity
-      await this.validateCartTotals(cart, warnings);
+      await this.validateCartTotals(cart, mutableWarnings);
 
-      const isValid = errors.length === 0;
-
+      // Return readonly arrays
       return Ok({
-        isValid,
-        errors,
-        warnings
+        isValid: mutableErrors.length === 0,
+        errors: mutableErrors as readonly typeof mutableErrors[0][],
+        warnings: mutableWarnings as readonly typeof mutableWarnings[0][]
       });
 
     } catch (error) {
@@ -1029,8 +1042,19 @@ export class CartService {
    */
   private async validateCartItem(
     item: CartItem, 
-    errors: CartValidationResult['errors'], 
-    warnings: CartValidationResult['warnings']
+    errors: Array<{
+      readonly itemKey: string;
+      readonly code: 'PRODUCT_NOT_FOUND' | 'OUT_OF_STOCK' | 'INSUFFICIENT_STOCK' | 'INVALID_QUANTITY' | 'VARIATION_NOT_FOUND';
+      readonly message: string;
+      readonly currentStock?: number;
+      readonly requestedQuantity?: number;
+    }>, 
+    warnings: Array<{
+      readonly itemKey: string;
+      readonly code: 'LOW_STOCK' | 'BACKORDER' | 'PRICE_CHANGED';
+      readonly message: string;
+      readonly details?: Record<string, unknown>;
+    }>
   ): Promise<void> {
     try {
       // 1. Fetch current product data
@@ -1040,19 +1064,21 @@ export class CartService {
         quantity: item.quantity
       });
 
-      if (productResult.isErr()) {
+      if (isErr(productResult)) {
         errors.push({
           itemKey: item.key,
           code: 'PRODUCT_NOT_FOUND',
-          message: `Product ${item.productId} no longer exists or is unavailable`
+          message: `Product with ID ${item.productId} not found`,
+          currentStock: 0,
+          requestedQuantity: item.quantity
         });
         return;
       }
 
-      const currentProduct = productResult.unwrap();
+      const product = unwrap(productResult);
 
       // 2. Validate product availability
-      if (currentProduct.status !== 'publish') {
+      if (product.status !== 'publish') {
         errors.push({
           itemKey: item.key,
           code: 'PRODUCT_NOT_FOUND',
@@ -1062,17 +1088,17 @@ export class CartService {
       }
 
       // 3. Validate stock levels
-      await this.validateItemStock(item, currentProduct, errors, warnings);
+      await this.validateItemStock(item, product, errors, warnings);
 
       // 4. Validate quantity limits
-      this.validateItemQuantityLimits(item, currentProduct, errors, warnings);
+      this.validateItemQuantityLimits(item, product, errors, warnings);
 
       // 5. Validate price changes
-      this.validateItemPriceChanges(item, currentProduct, warnings);
+      this.validateItemPriceChanges(item, product, warnings);
 
       // 6. Validate product variations (if applicable)
-      if (item.variationId && currentProduct.type === 'variable') {
-        await this.validateProductVariation(item, currentProduct, errors);
+      if (item.variationId && product.type === 'variable') {
+        await this.validateProductVariation(item, product, errors);
       }
 
     } catch (error) {
@@ -1091,9 +1117,20 @@ export class CartService {
   private async validateItemStock(
     item: CartItem,
     currentProduct: WooCommerceProduct,
-    errors: CartValidationResult['errors'],
-    warnings: CartValidationResult['warnings']
-  ): Promise<void> {
+    errors: Array<{
+      readonly itemKey: string;
+      readonly code: 'OUT_OF_STOCK' | 'INSUFFICIENT_STOCK';
+      readonly message: string;
+      readonly currentStock?: number;
+      readonly requestedQuantity?: number;
+    }>,
+    warnings: Array<{
+      readonly itemKey: string;
+      readonly code: 'LOW_STOCK' | 'BACKORDER';
+      readonly message: string;
+      readonly details?: Record<string, unknown>;
+    }>
+  ): void {
     // Check stock status
     if (currentProduct.stock_status === 'outofstock') {
       errors.push({
@@ -1170,8 +1207,18 @@ export class CartService {
   private validateItemQuantityLimits(
     item: CartItem,
     currentProduct: WooCommerceProduct,
-    errors: CartValidationResult['errors'],
-    warnings: CartValidationResult['warnings']
+    errors: Array<{
+      readonly itemKey: string;
+      readonly code: 'INVALID_QUANTITY';
+      readonly message: string;
+      readonly requestedQuantity: number;
+    }>,
+    warnings: Array<{
+      readonly itemKey: string;
+      readonly code: 'INVALID_QUANTITY';
+      readonly message: string;
+      readonly requestedQuantity: number;
+    }>
   ): void {
     // Check configured quantity limits
     if (item.quantityLimits) {
@@ -1222,7 +1269,12 @@ export class CartService {
   private validateItemPriceChanges(
     item: CartItem,
     currentProduct: WooCommerceProduct,
-    warnings: CartValidationResult['warnings']
+    warnings: Array<{
+      readonly itemKey: string;
+      readonly code: 'PRICE_CHANGED';
+      readonly message: string;
+      readonly details: Record<string, unknown>;
+    }>
   ): void {
     const currentRegularPrice = parseFloat(currentProduct.regular_price);
     const currentSalePrice = currentProduct.sale_price ? parseFloat(currentProduct.sale_price) : undefined;
@@ -1264,7 +1316,11 @@ export class CartService {
   private async validateProductVariation(
     item: CartItem,
     currentProduct: WooCommerceProduct,
-    errors: CartValidationResult['errors']
+    errors: Array<{
+      readonly itemKey: string;
+      readonly code: 'VARIATION_NOT_FOUND';
+      readonly message: string;
+    }>
   ): Promise<void> {
     try {
       // In a real implementation, you would fetch variation data from the API
@@ -1306,9 +1362,18 @@ export class CartService {
    */
   private async validateCartConstraints(
     cart: Cart,
-    errors: CartValidationResult['errors'],
-    warnings: CartValidationResult['warnings']
-  ): Promise<void> {
+    errors: Array<{
+      readonly itemKey: string;
+      readonly code: 'INVALID_QUANTITY';
+      readonly message: string;
+    }>,
+    warnings: Array<{
+      readonly itemKey: string;
+      readonly code: 'HIGH_QUANTITY' | 'EMPTY_CART' | 'MINIMUM_ORDER_NOT_MET';
+      readonly message: string;
+      readonly details?: Record<string, unknown>;
+    }>
+  ): void {
     // Validate maximum number of items
     if (cart.items.length > this.config.maxItems) {
       errors.push({
@@ -1356,9 +1421,18 @@ export class CartService {
    */
   private async validateAppliedCoupons(
     cart: Cart,
-    errors: CartValidationResult['errors'],
-    warnings: CartValidationResult['warnings']
-  ): Promise<void> {
+    errors: Array<{
+      readonly itemKey: string;
+      readonly code: 'COUPON_EXPIRED' | 'COUPON_USAGE_LIMIT_EXCEEDED' | 'COUPON_MINIMUM_NOT_MET' | 'COUPON_MAXIMUM_EXCEEDED' | 'COUPON_INDIVIDUAL_USE';
+      readonly message: string;
+    }>,
+    warnings: Array<{
+      readonly itemKey: string;
+      readonly code: 'COUPON_VALIDATION_ERROR';
+      readonly message: string;
+      readonly details: Record<string, unknown>;
+    }>
+  ): void {
     for (const coupon of cart.appliedCoupons) {
       try {
         // Validate coupon expiry
@@ -1426,7 +1500,12 @@ export class CartService {
    */
   private async validateCartTotals(
     cart: Cart,
-    warnings: CartValidationResult['warnings']
+    warnings: Array<{
+      readonly itemKey: string;
+      readonly code: 'TOTALS_MISMATCH' | 'TOTALS_VALIDATION_ERROR';
+      readonly message: string;
+      readonly details: Record<string, unknown>;
+    }>
   ): Promise<void> {
     try {
       // Recalculate totals and compare with stored totals
@@ -1463,111 +1542,40 @@ export class CartService {
   }
 
   /**
-   * Apply coupon to cart with comprehensive validation
+   * Apply coupon to cart
    */
   async applyCoupon(couponCode: string): Promise<Result<Cart, WooError>> {
     try {
-      if (!this.config.enableCoupons) {
-        return Err(ErrorFactory.configurationError('Coupons are disabled'));
+      const cart = await this.getCart();
+      if (isErr(cart)) {
+        return cart;
       }
 
-      if (!couponCode || couponCode.trim() === '') {
-        return Err(ErrorFactory.validationError('Coupon code is required'));
-      }
-
-      // Get current cart
-      const cartResult = await this.getCart();
-      if (!cartResult.success) {
-        return cartResult;
-      }
-
-      const cart = cartResult.data;
-      const normalizedCode = couponCode.trim().toUpperCase();
-
+      const cartData = unwrap(cart);
+      
       // Check if coupon is already applied
-      const existingCoupon = cart.appliedCoupons.find(c => c.code === normalizedCode);
-      if (existingCoupon) {
-        return Err(ErrorFactory.validationError(`Coupon ${normalizedCode} is already applied`));
+      const alreadyApplied = cartData.appliedCoupons.some(coupon => coupon.code === couponCode);
+      if (alreadyApplied) {
+        return Err(ErrorFactory.validationError('Coupon is already applied'));
       }
 
-      // Fetch coupon data from API
-      const couponResult = await this.fetchCouponData(normalizedCode);
-      if (!couponResult.success) {
-        return couponResult;
+      // Validate coupon
+      const validation = await this.validateCoupon(couponCode);
+      if (isErr(validation)) {
+        return validation;
       }
 
-      const couponData = couponResult.data;
-
-      // Validate coupon eligibility
-      const validationResult = await this.validateCouponEligibility(couponData, cart);
-      if (!validationResult.success) {
-        return validationResult;
+      const validationResult = unwrap(validation);
+      if (!validationResult.valid) {
+        return Err(ErrorFactory.validationError(validationResult.reason || 'Invalid coupon'));
       }
 
-      // Create applied coupon
-      const appliedCoupon: AppliedCoupon = {
-        code: couponData.code,
-        discountType: couponData.discount_type as 'percent' | 'fixed_cart' | 'fixed_product',
-        amount: parseFloat(couponData.amount) || 0,
-        description: couponData.description,
-        freeShipping: couponData.free_shipping || false,
-        expiryDate: couponData.date_expires ? new Date(couponData.date_expires) : undefined,
-        usageLimit: couponData.usage_limit || undefined,
-        usageCount: couponData.usage_count || 0,
-        individualUse: couponData.individual_use || false,
-        productIds: couponData.product_ids && couponData.product_ids.length > 0 ? couponData.product_ids : undefined,
-        excludedProductIds: couponData.excluded_product_ids && couponData.excluded_product_ids.length > 0 ? couponData.excluded_product_ids : undefined,
-        categoryIds: couponData.product_categories && couponData.product_categories.length > 0 ? couponData.product_categories : undefined,
-        excludedCategoryIds: couponData.excluded_product_categories && couponData.excluded_product_categories.length > 0 ? couponData.excluded_product_categories : undefined,
-        minimumAmount: couponData.minimum_amount ? parseFloat(couponData.minimum_amount) : undefined,
-        maximumAmount: couponData.maximum_amount ? parseFloat(couponData.maximum_amount) : undefined
-      };
-
-      // Handle individual use coupons
-      let updatedAppliedCoupons: readonly AppliedCoupon[];
-      if (appliedCoupon.individualUse) {
-        // Remove all other coupons
-        updatedAppliedCoupons = [appliedCoupon];
-      } else {
-        // Check if any existing coupons are individual use
-        const hasIndividualUseCoupon = cart.appliedCoupons.some(c => c.individualUse);
-        if (hasIndividualUseCoupon) {
-          return Err(ErrorFactory.validationError(
-            'Cannot apply coupon because an individual-use coupon is already applied'
-          ));
-        }
-        updatedAppliedCoupons = [...cart.appliedCoupons, appliedCoupon];
-      }
-
-      // Recalculate totals with new coupon
-      const updatedTotals = this.calculator.calculate(
-        cart.items,
-        updatedAppliedCoupons,
-        cart.shippingMethods,
-        cart.fees
-      );
-
-      // Create updated cart
-      const updatedCart: Cart = {
-        ...cart,
-        appliedCoupons: updatedAppliedCoupons,
-        totals: updatedTotals,
-        updatedAt: new Date()
-      };
-
-      // Save cart
-      const saveResult = await this.persistence.save(updatedCart);
-      if (!saveResult.success) {
-        return saveResult;
-      }
-
-      this.currentCart = updatedCart;
+      // Apply coupon and recalculate totals
+      const updatedCart = await this.recalculateWithCoupon(cartData, validationResult.coupon!);
       return Ok(updatedCart);
-
     } catch (error) {
-      return Err(ErrorFactory.cartError(
-        'Failed to apply coupon',
-        error
+      return Err(ErrorFactory.networkError(
+        error instanceof Error ? error.message : 'Failed to apply coupon'
       ));
     }
   }
@@ -1953,8 +1961,9 @@ export class CartService {
     const price = parseFloat(product.price) || 0;
     const regularPrice = parseFloat(product.regular_price) || 0;
     const salePrice = product.sale_price ? parseFloat(product.sale_price) : undefined;
+    const totalPrice = price * request.quantity;
 
-    return {
+    const cartItem: CartItem = {
       key: itemKey,
       productId: product.id,
       variationId: request.variationId,
@@ -1963,27 +1972,22 @@ export class CartService {
       price,
       regularPrice,
       salePrice,
-      totalPrice: price * request.quantity,
+      totalPrice,
+      total: totalPrice,
       sku: product.sku || undefined,
       weight: product.weight ? parseFloat(product.weight) : undefined,
-      dimensions: product.dimensions ? {
-        length: product.dimensions.length,
-        width: product.dimensions.width,
-        height: product.dimensions.height
-      } : undefined,
-      image: product.images?.[0] ? {
-        id: product.images[0].id,
-        src: product.images[0].src,
-        alt: product.images[0].alt || product.name
-      } : undefined,
-      stockQuantity: product.stock_quantity,
-      stockStatus: product.stock_status as 'instock' | 'outofstock' | 'onbackorder',
-      backorders: product.backorders as 'no' | 'notify' | 'yes',
-      meta: request.meta,
-      attributes: request.attributes,
-      addedAt: now,
-      updatedAt: now
+      stockQuantity: product.stock_quantity || undefined,
+      stockStatus: product.stock_status,
+      backordersAllowed: product.backorders_allowed || false,
+      soldIndividually: product.sold_individually || false,
+      downloadable: product.downloadable || false,
+      virtual: product.virtual || false,
+      meta: {},
+      addedAt: new Date(),
+      updatedAt: new Date()
     };
+
+    return cartItem;
   }
 
   private createEmptyCart(): Cart {

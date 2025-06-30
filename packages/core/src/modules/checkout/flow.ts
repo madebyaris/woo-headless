@@ -460,7 +460,15 @@ export class CheckoutFlowManager {
         const paymentInit = await this.initializePayment(createdOrder);
         if (isOk(paymentInit)) {
           const payment = unwrap(paymentInit);
-          paymentRedirectUrl = payment.redirectUrl;
+          return Ok({
+            success: true,
+            orderId: createdOrder.id.toString(),
+            redirectUrl: payment.redirectUrl,
+            paymentStatus: 'pending',
+            requiresRedirect: payment.requiresRedirect,
+            clientSecret: payment.clientSecret,
+            paymentIntentId: payment.paymentIntentId
+          });
         }
       }
 
