@@ -5,7 +5,7 @@
 
 import { Result, Ok, Err } from '../types/result';
 import { WooError, ErrorFactory } from '../types/errors';
-import { CacheConfig, CacheStorageType } from '../types/config';
+import { CacheConfig } from '../types/config';
 
 /**
  * Cache entry interface with metadata

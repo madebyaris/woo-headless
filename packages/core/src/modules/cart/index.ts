@@ -432,16 +432,17 @@ class CartTotalsCalculator {
     return {
       subtotal: this.roundTotal(subtotal),
       subtotalTax: this.roundTotal(subtotalTax),
-      shippingTotal: this.roundTotal(shippingTotal),
+      tax: this.roundTotal(totalTax),
+      shipping: this.roundTotal(shippingTotal),
       shippingTax: this.roundTotal(shippingTax),
-      discountTotal: this.roundTotal(discountTotal),
+      discount: this.roundTotal(discountTotal),
       discountTax: this.roundTotal(discountTax),
-      cartContentsTotal: this.roundTotal(cartContentsTotal),
-      cartContentsTax: this.roundTotal(cartContentsTax),
-      feeTotal: this.roundTotal(feeTotal),
+      fees: this.roundTotal(feeTotal),
       feeTax: this.roundTotal(feeTax),
       total: this.roundTotal(total),
-      totalTax: this.roundTotal(totalTax)
+      totalTax: this.roundTotal(totalTax),
+      cartContentsTotal: this.roundTotal(cartContentsTotal),
+      cartContentsTax: this.roundTotal(cartContentsTax)
     };
   }
 
