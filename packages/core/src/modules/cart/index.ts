@@ -1161,7 +1161,7 @@ export class CartService {
             itemKey: item.key,
             code: 'INSUFFICIENT_STOCK',
             message: `Only ${availableStock} units of ${item.name} available, but ${item.quantity} requested`,
-            currentStock: availableStock,
+            currentStock: availableStock ?? 0,
             requestedQuantity: item.quantity
           });
         }
@@ -1778,6 +1778,10 @@ export class CartService {
       }
 
       const coupon = coupons[0];
+      
+      if (!coupon) {
+        return Err(ErrorFactory.validationError(`Coupon ${couponCode} not found`));
+      }
 
       // Cache the result
       await this.cache.set(cacheKey, coupon, 300); // 5 minutes cache

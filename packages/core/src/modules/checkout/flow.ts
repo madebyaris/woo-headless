@@ -116,15 +116,11 @@ export class CheckoutFlowManager {
       // Create initial checkout session
       const session: CheckoutSession = {
         id: this.sessionId,
+        cartId: cart.id,
         isGuestCheckout,
-        billingAddress: null,
-        shippingAddress: null,
-        useShippingAsBilling: true,
-        selectedShippingMethod: null,
-        selectedPaymentMethod: null,
-        orderNotes: '',
-        termsAccepted: false,
-        newsletterOptIn: false,
+        orderTotals: cart.totals,
+        flow: createEmptyCheckoutFlow(),
+        expiresAt: new Date(Date.now() + this.config.sessionTimeout * 60 * 1000),
         createdAt: new Date(),
         updatedAt: new Date()
       };
@@ -136,8 +132,7 @@ export class CheckoutFlowManager {
         availableSteps: this.buildAvailableSteps(cart),
         canProceed: false,
         canGoBack: false,
-        session,
-        validationResult: undefined
+        session
       };
 
       // Persist session if configured
@@ -400,7 +395,7 @@ export class CheckoutFlowManager {
         checkoutSession: this.flowState.session,
         cart,
         validationRules: this.config.validationRules,
-        isGuestCheckout: this.flowState.session.isGuestCheckout,
+        isGuestCheckout: this.flowState.session.isGuestCheckout ?? false,
         currentStep: step,
         skipOptionalValidations: this.config.allowSkipOptional
       };
@@ -425,7 +420,7 @@ export class CheckoutFlowManager {
         checkoutSession: this.flowState.session,
         cart,
         validationRules: this.config.validationRules,
-        isGuestCheckout: this.flowState.session.isGuestCheckout,
+        isGuestCheckout: this.flowState.session.isGuestCheckout ?? false,
         currentStep: this.flowState.currentStep
       };
 

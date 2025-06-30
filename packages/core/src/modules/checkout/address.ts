@@ -193,7 +193,12 @@ export class AddressManager {
    */
   getFieldRequirements(context: AddressValidationContext): AddressFieldRequirements {
     const countryCode = context.checkoutRules?.requiredFields?.[0] || 'US';
-    const countryConfig = this.countryConfigs[countryCode] || this.countryConfigs['US'];
+    const countryConfig = this.countryConfigs[countryCode] || this.countryConfigs['US'] || {
+      code: 'US',
+      name: 'United States',
+      stateRequired: true,
+      postcodeRequired: true
+    };
     return this.buildFieldRequirements(context, countryConfig);
   }
 

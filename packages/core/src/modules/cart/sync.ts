@@ -51,7 +51,7 @@ export class CartSyncManager {
   
   private syncStatus: CartSyncStatus = 'idle';
   private lastSyncAt?: Date;
-  private syncTimer?: NodeJS.Timeout;
+  private backgroundSyncTimer: NodeJS.Timeout | undefined = undefined;
   private isOnline = true;
   private syncQueue: CartSyncQueueItem[] = [];
   private eventHandlers: CartSyncEventHandler[] = [];
@@ -738,7 +738,7 @@ export class CartSyncManager {
 
     this.stopBackgroundSync();
     
-    this.syncTimer = setInterval(() => {
+    this.backgroundSyncTimer = setInterval(() => {
       // Background sync will be triggered by the cart service
       // when it has access to the current cart and auth context
     }, this.config.syncIntervalMs);
@@ -748,9 +748,9 @@ export class CartSyncManager {
    * Stop background sync timer
    */
   private stopBackgroundSync(): void {
-    if (this.syncTimer) {
-      clearInterval(this.syncTimer);
-      this.syncTimer = undefined;
+    if (this.backgroundSyncTimer) {
+      clearInterval(this.backgroundSyncTimer);
+      this.backgroundSyncTimer = undefined;
     }
   }
 
