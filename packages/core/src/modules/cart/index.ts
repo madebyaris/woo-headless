@@ -1224,7 +1224,6 @@ export class CartService {
     currentProduct: WooCommerceProduct,
     warnings: CartValidationResult['warnings']
   ): void {
-    const currentPrice = parseFloat(currentProduct.price);
     const currentRegularPrice = parseFloat(currentProduct.regular_price);
     const currentSalePrice = currentProduct.sale_price ? parseFloat(currentProduct.sale_price) : undefined;
 

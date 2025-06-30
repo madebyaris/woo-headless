@@ -7,19 +7,11 @@
 import { Result, Ok, Err, isErr, isOk, unwrap, unwrapErr } from '../../types/result';
 import { WooError, ErrorFactory } from '../../types/errors';
 import { 
-  CheckoutFlow,
   CheckoutStep,
   CheckoutStepType,
   CheckoutSession,
-  CheckoutFormData,
   CheckoutValidationRules,
-  BillingAddress,
-  ShippingAddress,
-  SelectedShippingMethod,
-  PaymentMethod,
-  Order,
-  OrderTotals,
-  createEmptyCheckoutFlow
+  Order
 } from '../../types/checkout';
 import { Cart } from '../../types/cart';
 import { AddressManager } from './address';
@@ -90,8 +82,6 @@ export interface CheckoutFlowEventHandlers {
  * Comprehensive checkout flow manager
  */
 export class CheckoutFlowManager {
-  private readonly addressManager: AddressManager;
-  private readonly shippingService: ShippingService;
   private readonly paymentService: PaymentService;
   private readonly validationService: CheckoutValidationService;
   private readonly config: CheckoutFlowConfig;
@@ -108,8 +98,7 @@ export class CheckoutFlowManager {
     config: CheckoutFlowConfig,
     eventHandlers: CheckoutFlowEventHandlers = {}
   ) {
-    this.addressManager = addressManager;
-    this.shippingService = shippingService;
+    // Store only the services we actually use
     this.paymentService = paymentService;
     this.validationService = validationService;
     this.config = config;
@@ -301,7 +290,6 @@ export class CheckoutFlowManager {
       // If going forward, validate all steps in between
       if (targetStep > currentStep) {
         for (let step = currentStep; step < targetStep; step++) {
-          const tempState = { ...this.flowState, currentStep: step };
           const validationResult = await this.validateStep(step, cart);
           if (isErr(validationResult)) {
             return Err(unwrapErr(validationResult));
@@ -468,7 +456,6 @@ export class CheckoutFlowManager {
       const createdOrder = unwrap(order);
 
       // Initialize payment if required
-      let paymentRedirectUrl: string | undefined;
       if (this.flowState.session.selectedPaymentMethod) {
         const paymentInit = await this.initializePayment(createdOrder);
         if (isOk(paymentInit)) {

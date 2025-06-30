@@ -3,7 +3,7 @@
  * Following the Enhanced Unified 10X Developer Framework
  */
 
-import { Result, Ok, Err, isErr, isOk, unwrap, unwrapErr } from '../../types/result';
+import { Result, Ok, Err, isErr, unwrap, unwrapErr } from '../../types/result';
 import { WooError, ErrorFactory } from '../../types/errors';
 import { 
   BaseAddress, 
@@ -11,8 +11,6 @@ import {
   ShippingAddress,
   AddressValidation,
   CountryConfig,
-  CheckoutErrorCode,
-  CheckoutError,
   CheckoutValidationRules,
   validateBaseAddress,
   validateBillingAddress,
