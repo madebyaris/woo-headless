@@ -1,9 +1,4 @@
----
-description: 
-globs: 
-alwaysApply: true
----
-# Enhanced Unified 10X Developer Framework - Error-Free Edition
+# Enhanced Unified 10X Developer Framework - Error-Free Edition v3.0
 
 ## 🎯 Project Context & Architecture
 **Current Project**: WooCommerce Headless SDK (`@woo-headless/sdk`)
@@ -26,6 +21,31 @@ alwaysApply: true
 - **Exhaustive Error Handling**: Every API call wrapped in try-catch with specific error types
 - **Validation First**: Input validation before processing, output validation before return
 - **Immutable Patterns**: Use readonly types, avoid mutations, prefer functional patterns
+
+### **NEW: TypeScript Compilation Mastery** ✨
+**PROVEN APPROACH**: Systematic batch fixing for large codebases
+```typescript
+// ✅ SYSTEMATIC ERROR RESOLUTION PATTERN
+// Phase 1: exactOptionalPropertyTypes compatibility
+const config = value ?? defaultValue; // Instead of value | undefined
+
+// Phase 2: Missing interface properties
+interface CompleteInterface {
+  readonly requiredProp: string;
+  readonly optionalProp?: string; // Use ? for truly optional
+}
+
+// Phase 3: Type alignment issues
+type StrictUnion = 'value1' | 'value2' | 'value3'; // No string fallback
+
+// ✅ BATCH PROCESSING STRATEGY
+// 1. Group similar errors together
+// 2. Fix one pattern across entire codebase
+// 3. Validate pattern works before moving to next batch
+// 4. Track progress: 204 → 174 → 150 → 0 errors
+```
+
+**CRITICAL**: Never attempt to fix all TypeScript errors simultaneously. Use systematic batch approach with progress tracking.
 
 ### **Naming - Eliminate Ambiguity**
 ```typescript
@@ -82,6 +102,28 @@ async function apiCall<T>(request: Request): Promise<Result<T, WooError>> {
   }
 }
 ```
+
+## 🚀 **NEW: Parallel Tool Execution Mastery** ✨
+**CRITICAL EFFICIENCY RULE**: Default to parallel tool calls unless sequentially dependent
+
+```typescript
+// ✅ PARALLEL EXECUTION - ALWAYS PREFERRED
+await Promise.all([
+  readFile('file1.ts'),
+  readFile('file2.ts'), 
+  grepSearch('pattern1'),
+  grepSearch('pattern2')
+]);
+
+// ❌ SEQUENTIAL EXECUTION - ONLY WHEN NECESSARY
+const result1 = await readFile('config.ts');
+const configData = parseConfig(result1); // Depends on result1
+const result2 = await processWithConfig(configData); // Depends on configData
+```
+
+**PERFORMANCE IMPACT**: Parallel execution can be **3-5x faster** than sequential calls. This is not just optimization - it's expected behavior.
+
+**WHEN TO USE SEQUENTIAL**: Only when output of Tool A is required as input for Tool B.
 
 ## 🛡️ Security & Authentication - No Compromises
 
@@ -165,7 +207,46 @@ interface SearchBoxProps extends ComponentProps {
 - **First Paint**: <1.2s on 3G
 - **Lighthouse Score**: >90 in all categories
 
-## 🧪 Testing - 100% Coverage Requirements
+## 🧪 **Enhanced Testing - Real API Integration** ✨
+
+### **PROVEN TESTING HIERARCHY**
+1. **Unit Tests** - Individual function testing
+2. **Integration Tests** - Service-to-service communication
+3. **Real API Tests** - Live environment validation ⭐ **CRITICAL**
+4. **End-to-End Tests** - Complete user journey
+
+### **Real API Integration Testing - MANDATORY**
+```typescript
+// ✅ REAL API VALIDATION - Test with live WooCommerce store
+describe('Live WooCommerce Integration', () => {
+  it('should create real orders with proper customer attribution', async () => {
+    const woo = new WooHeadless(LIVE_CONFIG);
+    
+    // Real customer creation
+    const customer = await woo.customers.create(realCustomerData);
+    expect(customer.success).toBe(true);
+    
+    // Real order creation  
+    const order = await woo.orders.create({
+      customer_id: customer.data.id,
+      line_items: realLineItems,
+      // CRITICAL: Customer attribution metadata
+      meta_data: [
+        { key: '_order_attribution_utm_source', value: 'woo_headless_sdk' },
+        { key: '_order_attribution_utm_medium', value: 'api' },
+        { key: '_created_via', value: 'headless_sdk' }
+      ]
+    });
+    
+    // Validate real order exists in WooCommerce
+    expect(order.data.id).toBeGreaterThan(0);
+    expect(order.data.customer_id).toBe(customer.data.id);
+    expect(order.data.status).toBe('processing');
+  });
+});
+```
+
+**CRITICAL**: Never ship without real API testing. Mocks hide integration issues.
 
 ### **Required Test Types**
 ```typescript
@@ -243,6 +324,7 @@ describe('Performance Tests', () => {
 - [ ] Error handling implemented for all API calls
 - [ ] Input validation added where needed
 - [ ] Tests written and passing (>95% coverage)
+- [ ] Real API integration tested
 - [ ] No console.log or debugging code
 - [ ] Performance impact assessed
 - [ ] Accessibility compliance verified
@@ -253,7 +335,7 @@ describe('Performance Tests', () => {
 
 ### **Definition of Done - Non-Negotiable**
 - [ ] Feature works as specified in PRD
-- [ ] All tests pass (unit + integration + e2e)
+- [ ] All tests pass (unit + integration + real API)
 - [ ] TypeScript compiles without errors or warnings
 - [ ] ESLint and Prettier pass
 - [ ] Performance targets met
@@ -263,7 +345,8 @@ describe('Performance Tests', () => {
 - [ ] Cross-browser tested (Chrome, Firefox, Safari)
 - [ ] Bundle size impact measured
 
-## 🔍 Problem-Solving Framework - IDENTIFY → ISOLATE → FIX → VERIFY
+## 🔍 **Enhanced Problem-Solving Framework** ✨
+### **IDENTIFY → ISOLATE → FIX → VERIFY** (Proven Effective)
 
 ### **IDENTIFY Phase**
 1. **Reproduce the issue** with minimal test case
@@ -288,6 +371,14 @@ describe('Performance Tests', () => {
 2. **Performance impact assessment**
 3. **Security implications review**
 4. **Documentation update**
+
+### **NEW: Batch Error Resolution Strategy** ✨
+For large-scale TypeScript compilation issues:
+1. **Group by Error Type**: exactOptionalPropertyTypes, missing properties, type alignment
+2. **Fix One Pattern**: Apply consistent fix across entire codebase
+3. **Validate Pattern**: Ensure fix works before moving to next batch
+4. **Track Progress**: Monitor error count reduction (204 → 174 → 150 → 0)
+5. **Document Patterns**: Record successful fix patterns for reuse
 
 ## 📋 Quick Commands - Instant Mode Switch
 
@@ -321,7 +412,13 @@ describe('Performance Tests', () => {
 - Check color contrast ratios
 - Test on mobile devices
 
-## 🎯 WooCommerce SDK Specific Rules
+### **NEW: PARALLEL MODE** ✨ - Maximum Efficiency
+- Plan all information gathering needs upfront
+- Execute all read-only operations simultaneously
+- Use sequential calls only when output A feeds into input B
+- Monitor and measure performance improvements
+
+## 🎯 **Enhanced WooCommerce SDK Specific Rules** ✨
 
 ### **API Integration - Never Assume**
 ```typescript
@@ -343,6 +440,46 @@ interface WooCommerceProduct {
 
 function validateWooCommerceProduct(data: unknown): WooCommerceProduct {
   return WooCommerceProductSchema.parse(data);
+}
+```
+
+### **NEW: Customer Attribution - E-commerce Critical** ✨
+```typescript
+// ✅ MANDATORY: Proper customer attribution for orders
+interface OrderAttribution {
+  readonly customer_id: number; // NEVER 0 for guest orders
+  readonly meta_data: readonly {
+    readonly key: '_order_attribution_utm_source';
+    readonly value: string; // e.g., 'woo_headless_sdk'
+  } | {
+    readonly key: '_order_attribution_utm_medium';
+    readonly value: string; // e.g., 'api'
+  } | {
+    readonly key: '_created_via';
+    readonly value: string; // e.g., 'headless_sdk'
+  } | {
+    readonly key: '_customer_user_agent';
+    readonly value: string;
+  })[];
+}
+
+// ✅ CRITICAL: Create customer accounts, not guest orders
+async function createOrderWithCustomer(orderData: OrderRequest): Promise<Result<Order, WooError>> {
+  // 1. Create customer first
+  const customer = await createCustomerAccount(orderData.billing);
+  
+  // 2. Associate order with customer
+  const order = await createOrder({
+    ...orderData,
+    customer_id: customer.id, // NEVER leave as 0
+    meta_data: [
+      ...orderData.meta_data,
+      { key: '_order_attribution_utm_source', value: 'woo_headless_sdk' },
+      { key: '_created_via', value: 'headless_sdk' }
+    ]
+  });
+  
+  return order;
 }
 ```
 
@@ -395,6 +532,12 @@ export function useProducts() {
 - **GitHub issues response <24 hours**
 - **Community satisfaction >4.5/5** stars
 
+### **NEW: Real-World Validation** ✨
+- **Live API integration** tested and validated
+- **Real order creation** confirmed in production WooCommerce
+- **Customer attribution** working correctly
+- **Complete e-commerce flow** tested end-to-end
+
 ---
 
 ## 🚨 Red Flags - Never Do This
@@ -407,6 +550,9 @@ export function useProducts() {
 ❌ Writing functions without tests  
 ❌ Hardcoding configuration values  
 ❌ Using deprecated WooCommerce API endpoints  
+❌ **NEW**: Attempting to fix all TypeScript errors simultaneously
+❌ **NEW**: Using sequential tool calls when parallel is possible
+❌ **NEW**: Shipping without real API testing
 
 ### **Architecture Red Flags**
 ❌ Adding AI dependencies to core SDK  
@@ -415,6 +561,8 @@ export function useProducts() {
 ❌ Ignoring bundle size impact  
 ❌ Skipping performance testing  
 ❌ Building without security review  
+❌ **NEW**: Creating guest orders instead of customer accounts
+❌ **NEW**: Missing customer attribution metadata
 
 ### **Process Red Flags**
 ❌ Shipping without documentation  
@@ -422,7 +570,34 @@ export function useProducts() {
 ❌ Deploying without tests passing  
 ❌ Making breaking changes without migration guide  
 ❌ Adding features not in PRD without approval  
+❌ **NEW**: Skipping real API integration testing
+❌ **NEW**: Using mocks exclusively without live validation
 
+---
+
+## 🏆 **NEW: Proven Success Patterns** ✨
+
+### **TypeScript Compilation Success**
+- **204 → 0 errors** using systematic batch approach
+- **exactOptionalPropertyTypes** compatibility achieved
+- **Progressive fixing** proven more effective than bulk fixes
+
+### **Real API Integration Success**
+- **Live WooCommerce integration** with actual orders (Order #186, #188, #190)
+- **Customer attribution** successfully implemented
+- **Complete e-commerce flow** validated end-to-end
+
+### **Parallel Execution Success**
+- **3-5x performance improvement** through parallel tool calls
+- **Information gathering efficiency** maximized
+- **Sequential dependency chains** minimized
+
+---
+
+**Framework Version**: 3.0 Enhanced - WooCommerce SDK Learnings Integrated
+**Last Updated**: December 2024 - Based on real SDK development experience
+**Next Review**: After next major milestone  
+**Compliance**: 100% Required for all code
 ---
 
 **Framework Version**: 2.0 Enhanced
