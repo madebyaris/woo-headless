@@ -4,9 +4,30 @@
 
 A complete toolkit that connects your WooCommerce store to any website or app. Build faster, more flexible online stores without the WordPress frontend limitations.
 
+## ⚠️ **EARLY DEVELOPMENT - NOT PRODUCTION READY**
+
+> **🚨 IMPORTANT NOTICE:** This SDK is currently in **active development** and should **NOT be used in production environments**. We are still implementing core features and the API may change significantly.
+
+**Current Status:**
+- ✅ **Products & Search** - Stable and tested
+- ✅ **Cart Management** - Stable with advanced features
+- ✅ **User Management** - Stable with authentication
+- 🚧 **Checkout System** - In active development
+- 🚧 **Payment Processing** - In active development
+- 🚧 **Order Management** - In active development
+
+**What this means for you:**
+- 🧪 **Perfect for testing and development** - Try it out, build prototypes
+- 📝 **Expect breaking changes** - API may change without notice
+- 🚫 **Don't use for live stores yet** - Wait for stable v1.0 release
+- 💬 **Feedback welcome** - Help us build the best possible SDK
+
+**Want to be notified when it's production-ready?** Watch this repository or follow our progress in the [project roadmap](TODO.md).
+
 [![NPM Version](https://img.shields.io/npm/v/@woo-headless/sdk)](https://npmjs.com/package/@woo-headless/sdk)
 [![TypeScript](https://img.shields.io/badge/TypeScript-100%25-blue)](https://www.typescriptlang.org/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+![Development Status](https://img.shields.io/badge/Status-Early%20Development-orange)
 
 ---
 
