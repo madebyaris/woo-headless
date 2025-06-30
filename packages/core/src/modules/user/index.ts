@@ -38,6 +38,16 @@ import {
   isUserAuthContext
 } from '../../types/user';
 import { generateId } from '../../test/utils';
+import { 
+  EmailVerificationService, 
+  EmailVerificationConfig, 
+  EmailVerificationRequest,
+  EmailVerificationConfirmRequest,
+  EmailVerificationResponse,
+  EmailVerificationConfirmResponse,
+  EmailVerificationStatus,
+  DEFAULT_EMAIL_VERIFICATION_CONFIG
+} from './email-verification';
 
 /**
  * User cache manager for optimized data access
@@ -214,17 +224,24 @@ export class UserService {
   private readonly cache: CacheManager;
   private readonly config: UserSyncConfig;
   private readonly userCache: UserCacheManager;
+  private readonly emailVerification: EmailVerificationService;
   private currentAuthContext: UserAuthContext | null = null;
 
   constructor(
     client: HttpClient,
     cache: CacheManager,
-    config: UserSyncConfig
+    config: UserSyncConfig,
+    emailVerificationConfig?: EmailVerificationConfig
   ) {
     this.client = client;
     this.cache = cache;
     this.config = config;
     this.userCache = new UserCacheManager(cache, config);
+    this.emailVerification = new EmailVerificationService(
+      client,
+      cache,
+      emailVerificationConfig || DEFAULT_EMAIL_VERIFICATION_CONFIG
+    );
   }
 
   /**
@@ -530,6 +547,43 @@ export class UserService {
    */
   validateAddress(address: UserAddress): AddressValidationResult {
     return AddressValidator.validateAddress(address);
+  }
+
+  // Email Verification Methods
+
+  /**
+   * Send email verification
+   */
+  async sendEmailVerification(request: EmailVerificationRequest): Promise<Result<EmailVerificationResponse, WooError>> {
+    return this.emailVerification.sendVerification(request);
+  }
+
+  /**
+   * Confirm email verification
+   */
+  async confirmEmailVerification(request: EmailVerificationConfirmRequest): Promise<Result<EmailVerificationConfirmResponse, WooError>> {
+    return this.emailVerification.confirmVerification(request);
+  }
+
+  /**
+   * Get email verification status
+   */
+  async getEmailVerificationStatus(userId: number): Promise<Result<EmailVerificationStatus, WooError>> {
+    return this.emailVerification.getVerificationStatus(userId);
+  }
+
+  /**
+   * Resend email verification
+   */
+  async resendEmailVerification(userId: number): Promise<Result<EmailVerificationResponse, WooError>> {
+    return this.emailVerification.resendVerification(userId);
+  }
+
+  /**
+   * Check if email verification is required for a specific action
+   */
+  isEmailVerificationRequired(action: 'purchase' | 'profile_update' | 'password_change'): boolean {
+    return this.emailVerification.isVerificationRequired(action);
   }
 
   /**
