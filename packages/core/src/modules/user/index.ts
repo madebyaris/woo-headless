@@ -48,6 +48,15 @@ import {
   EmailVerificationStatus,
   DEFAULT_EMAIL_VERIFICATION_CONFIG
 } from './email-verification';
+import { 
+  DownloadManagementService, 
+  DownloadConfig, 
+  CustomerDownload, 
+  DownloadRequest, 
+  DownloadLink, 
+  DownloadStatistics,
+  DEFAULT_DOWNLOAD_CONFIG 
+} from './download-management';
 
 /**
  * User cache manager for optimized data access
@@ -225,13 +234,15 @@ export class UserService {
   private readonly config: UserSyncConfig;
   private readonly userCache: UserCacheManager;
   private readonly emailVerification: EmailVerificationService;
+  private readonly downloads: DownloadManagementService;
   private currentAuthContext: UserAuthContext | null = null;
 
   constructor(
     client: HttpClient,
     cache: CacheManager,
     config: UserSyncConfig,
-    emailVerificationConfig?: EmailVerificationConfig
+    emailVerificationConfig?: EmailVerificationConfig,
+    downloadConfig?: DownloadConfig
   ) {
     this.client = client;
     this.cache = cache;
@@ -241,6 +252,11 @@ export class UserService {
       client,
       cache,
       emailVerificationConfig || DEFAULT_EMAIL_VERIFICATION_CONFIG
+    );
+    this.downloads = new DownloadManagementService(
+      client,
+      cache,
+      downloadConfig || DEFAULT_DOWNLOAD_CONFIG
     );
   }
 
@@ -586,6 +602,40 @@ export class UserService {
     return this.emailVerification.isVerificationRequired(action);
   }
 
+  // Download Management Methods
+
+  /**
+   * Get customer's downloadable products
+   */
+  async getCustomerDownloads(customerId: number): Promise<Result<CustomerDownload[], WooError>> {
+    return this.downloads.getCustomerDownloads(customerId);
+  }
+
+  /**
+   * Generate secure download link
+   */
+  async generateDownloadLink(request: DownloadRequest): Promise<Result<DownloadLink, WooError>> {
+    return this.downloads.generateDownloadLink(request);
+  }
+
+  /**
+   * Get download statistics
+   */
+  async getDownloadStatistics(
+    customerId?: number,
+    startDate?: Date,
+    endDate?: Date
+  ): Promise<Result<DownloadStatistics, WooError>> {
+    return this.downloads.getDownloadStatistics(customerId, startDate, endDate);
+  }
+
+  /**
+   * Cleanup expired downloads
+   */
+  async cleanupExpiredDownloads(): Promise<Result<number, WooError>> {
+    return this.downloads.cleanupExpiredDownloads();
+  }
+
   /**
    * Get user order history
    */
@@ -769,4 +819,21 @@ export class UserService {
       isDefault: true
     };
   }
-} 
+}
+
+// Export download management types and service
+export type { 
+  DigitalProduct, 
+  DownloadableFile, 
+  DownloadLink, 
+  DownloadPermission, 
+  CustomerDownload, 
+  DownloadAnalytics, 
+  DownloadRequest, 
+  DownloadValidationResult, 
+  DownloadStatistics, 
+  DownloadConfig, 
+  FileStream 
+} from './download-management';
+
+export { DownloadManagementService, DEFAULT_DOWNLOAD_CONFIG } from './download-management'; 
