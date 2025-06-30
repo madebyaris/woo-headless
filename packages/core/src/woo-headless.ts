@@ -12,6 +12,7 @@ import { CartService } from './modules/cart';
 import { SearchService } from './modules/search';
 import { UserService } from './modules/user';
 import { CheckoutService } from './modules/checkout';
+import { ReviewService } from './modules/reviews';
 import { WooConfig, ResolvedWooConfig } from './types/config';
 import { Result } from './types/result';
 import { ConfigurationError, WooError } from './types/errors';
@@ -31,6 +32,7 @@ export class WooHeadless {
   public readonly search: SearchService;
   public readonly user: UserService;
   public readonly checkout: CheckoutService;
+  public readonly reviews: ReviewService;
 
   constructor(config: WooConfig) {
     // Validate and resolve configuration
@@ -81,6 +83,7 @@ export class WooHeadless {
     this.search = new SearchService(this.httpClient, this.cacheManager, this.config.advancedSearch);
     this.user = new UserService(this.httpClient, this.cacheManager, this.config.userSync);
     this.checkout = new CheckoutService(this.httpClient, this.cacheManager, this.config.checkout);
+    this.reviews = new ReviewService(this.httpClient, this.cacheManager);
   }
 
   /**

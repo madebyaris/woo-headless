@@ -68,6 +68,29 @@ export type {
   AddressType
 } from './types/user';
 
+// Review and rating types
+export type {
+  ProductReview,
+  ReviewStatus,
+  ReviewImage,
+  CreateReviewRequest,
+  UpdateReviewRequest,
+  ReviewListParams,
+  ReviewListResponse,
+  RatingDistribution,
+  ReviewAnalytics,
+  ReviewVote,
+  ReviewModeration,
+  ReviewValidationResult,
+  ReviewFilter,
+  ReviewSort,
+  ReviewSearchConfig,
+  ReviewNotificationSettings,
+  ReviewExportOptions,
+  ReviewImportOptions,
+  ReviewRateLimit
+} from './types/review';
+
 // Core classes
 export { HttpClient } from './core/client';
 export { AuthManager } from './core/auth';
@@ -81,6 +104,7 @@ export type { ProductListParams, ProductListResponse, VariationListParams } from
 export { CartService } from './modules/cart';
 export { SearchService } from './modules/search';
 export { UserService } from './modules/user';
+export { ReviewService } from './modules/reviews';
 
 // Main SDK class
 export { WooHeadless } from './woo-headless';
