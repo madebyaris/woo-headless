@@ -38,6 +38,25 @@ import {
   isUserAuthContext
 } from '../../types/user';
 import { generateId } from '../../test/utils';
+import { 
+  EmailVerificationService, 
+  EmailVerificationConfig, 
+  EmailVerificationRequest,
+  EmailVerificationConfirmRequest,
+  EmailVerificationResponse,
+  EmailVerificationConfirmResponse,
+  EmailVerificationStatus,
+  DEFAULT_EMAIL_VERIFICATION_CONFIG
+} from './email-verification';
+import { 
+  DownloadManagementService, 
+  DownloadConfig, 
+  CustomerDownload, 
+  DownloadRequest, 
+  DownloadLink, 
+  DownloadStatistics,
+  DEFAULT_DOWNLOAD_CONFIG 
+} from './download-management';
 
 /**
  * User cache manager for optimized data access
@@ -214,17 +233,31 @@ export class UserService {
   private readonly cache: CacheManager;
   private readonly config: UserSyncConfig;
   private readonly userCache: UserCacheManager;
+  private readonly emailVerification: EmailVerificationService;
+  private readonly downloads: DownloadManagementService;
   private currentAuthContext: UserAuthContext | null = null;
 
   constructor(
     client: HttpClient,
     cache: CacheManager,
-    config: UserSyncConfig
+    config: UserSyncConfig,
+    emailVerificationConfig?: EmailVerificationConfig,
+    downloadConfig?: DownloadConfig
   ) {
     this.client = client;
     this.cache = cache;
     this.config = config;
     this.userCache = new UserCacheManager(cache, config);
+    this.emailVerification = new EmailVerificationService(
+      client,
+      cache,
+      emailVerificationConfig || DEFAULT_EMAIL_VERIFICATION_CONFIG
+    );
+    this.downloads = new DownloadManagementService(
+      client,
+      cache,
+      downloadConfig || DEFAULT_DOWNLOAD_CONFIG
+    );
   }
 
   /**
@@ -532,6 +565,77 @@ export class UserService {
     return AddressValidator.validateAddress(address);
   }
 
+  // Email Verification Methods
+
+  /**
+   * Send email verification
+   */
+  async sendEmailVerification(request: EmailVerificationRequest): Promise<Result<EmailVerificationResponse, WooError>> {
+    return this.emailVerification.sendVerification(request);
+  }
+
+  /**
+   * Confirm email verification
+   */
+  async confirmEmailVerification(request: EmailVerificationConfirmRequest): Promise<Result<EmailVerificationConfirmResponse, WooError>> {
+    return this.emailVerification.confirmVerification(request);
+  }
+
+  /**
+   * Get email verification status
+   */
+  async getEmailVerificationStatus(userId: number): Promise<Result<EmailVerificationStatus, WooError>> {
+    return this.emailVerification.getVerificationStatus(userId);
+  }
+
+  /**
+   * Resend email verification
+   */
+  async resendEmailVerification(userId: number): Promise<Result<EmailVerificationResponse, WooError>> {
+    return this.emailVerification.resendVerification(userId);
+  }
+
+  /**
+   * Check if email verification is required for a specific action
+   */
+  isEmailVerificationRequired(action: 'purchase' | 'profile_update' | 'password_change'): boolean {
+    return this.emailVerification.isVerificationRequired(action);
+  }
+
+  // Download Management Methods
+
+  /**
+   * Get customer's downloadable products
+   */
+  async getCustomerDownloads(customerId: number): Promise<Result<CustomerDownload[], WooError>> {
+    return this.downloads.getCustomerDownloads(customerId);
+  }
+
+  /**
+   * Generate secure download link
+   */
+  async generateDownloadLink(request: DownloadRequest): Promise<Result<DownloadLink, WooError>> {
+    return this.downloads.generateDownloadLink(request);
+  }
+
+  /**
+   * Get download statistics
+   */
+  async getDownloadStatistics(
+    customerId?: number,
+    startDate?: Date,
+    endDate?: Date
+  ): Promise<Result<DownloadStatistics, WooError>> {
+    return this.downloads.getDownloadStatistics(customerId, startDate, endDate);
+  }
+
+  /**
+   * Cleanup expired downloads
+   */
+  async cleanupExpiredDownloads(): Promise<Result<number, WooError>> {
+    return this.downloads.cleanupExpiredDownloads();
+  }
+
   /**
    * Get user order history
    */
@@ -715,4 +819,21 @@ export class UserService {
       isDefault: true
     };
   }
-} 
+}
+
+// Export download management types and service
+export type { 
+  DigitalProduct, 
+  DownloadableFile, 
+  DownloadLink, 
+  DownloadPermission, 
+  CustomerDownload, 
+  DownloadAnalytics, 
+  DownloadRequest, 
+  DownloadValidationResult, 
+  DownloadStatistics, 
+  DownloadConfig, 
+  FileStream 
+} from './download-management';
+
+export { DownloadManagementService, DEFAULT_DOWNLOAD_CONFIG } from './download-management'; 
