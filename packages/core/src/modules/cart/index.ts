@@ -12,7 +12,6 @@ import {
   Cart,
   CartItem,
   CartAddItemRequest,
-  CartUpdateRequest,
   CartTotals,
   CartValidationResult,
   CartPersistenceConfig,
@@ -20,11 +19,9 @@ import {
   ShippingMethod,
   CartFee,
   CartAddItemRequestSchema,
-  CartUpdateRequestSchema,
   CartSyncResult,
   CartSyncStatus,
-  isCart,
-  isCartItem
+  isCart
 } from '../../types/cart';
 import { CartConfig } from '../../types/config';
 import { UserAuthContext } from '../../types/user';
@@ -432,16 +429,20 @@ class CartTotalsCalculator {
     return {
       subtotal: this.roundTotal(subtotal),
       subtotalTax: this.roundTotal(subtotalTax),
-      shippingTotal: this.roundTotal(shippingTotal),
+      tax: this.roundTotal(totalTax),
+      shipping: this.roundTotal(shippingTotal),
+      shippingTotal: this.roundTotal(shippingTotal), // alias for shipping
       shippingTax: this.roundTotal(shippingTax),
-      discountTotal: this.roundTotal(discountTotal),
+      discount: this.roundTotal(discountTotal),
+      discountTotal: this.roundTotal(discountTotal), // alias for discount
       discountTax: this.roundTotal(discountTax),
-      cartContentsTotal: this.roundTotal(cartContentsTotal),
-      cartContentsTax: this.roundTotal(cartContentsTax),
-      feeTotal: this.roundTotal(feeTotal),
+      fees: this.roundTotal(feeTotal),
+      feeTotal: this.roundTotal(feeTotal), // alias for fees
       feeTax: this.roundTotal(feeTax),
       total: this.roundTotal(total),
-      totalTax: this.roundTotal(totalTax)
+      totalTax: this.roundTotal(totalTax),
+      cartContentsTotal: this.roundTotal(cartContentsTotal),
+      cartContentsTax: this.roundTotal(cartContentsTax)
     };
   }
 
@@ -766,6 +767,7 @@ export class CartService {
             regularPrice: existingItem.regularPrice,
             salePrice: existingItem.salePrice,
             totalPrice: existingItem.price * newQuantity,
+            total: existingItem.price * newQuantity, // alias for totalPrice
             sku: existingItem.sku,
             weight: existingItem.weight,
             dimensions: existingItem.dimensions,
@@ -875,6 +877,7 @@ export class CartService {
         regularPrice: item.regularPrice,
         salePrice: item.salePrice,
         totalPrice: item.price * quantity,
+        total: item.price * quantity, // alias for totalPrice
         sku: item.sku,
         weight: item.weight,
         dimensions: item.dimensions,
@@ -1221,7 +1224,6 @@ export class CartService {
     currentProduct: WooCommerceProduct,
     warnings: CartValidationResult['warnings']
   ): void {
-    const currentPrice = parseFloat(currentProduct.price);
     const currentRegularPrice = parseFloat(currentProduct.regular_price);
     const currentSalePrice = currentProduct.sale_price ? parseFloat(currentProduct.sale_price) : undefined;
 

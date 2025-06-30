@@ -707,7 +707,7 @@ export class ValidationRuleBuilder {
    * Set minimum order amount
    */
   minimumOrderAmount(amount: number): ValidationRuleBuilder {
-    this.rules.minimumOrderAmount = amount;
+    this.rules = { ...this.rules, minimumOrderAmount: amount };
     return this;
   }
 
@@ -715,7 +715,7 @@ export class ValidationRuleBuilder {
    * Set maximum order amount
    */
   maximumOrderAmount(amount: number): ValidationRuleBuilder {
-    this.rules.maximumOrderAmount = amount;
+    this.rules = { ...this.rules, maximumOrderAmount: amount };
     return this;
   }
 
@@ -723,7 +723,7 @@ export class ValidationRuleBuilder {
    * Require email address
    */
   requireEmail(required: boolean = true): ValidationRuleBuilder {
-    this.rules.requireEmail = required;
+    this.rules = { ...this.rules, requireEmail: required };
     return this;
   }
 
@@ -731,7 +731,7 @@ export class ValidationRuleBuilder {
    * Require phone number
    */
   requirePhoneNumber(required: boolean = true): ValidationRuleBuilder {
-    this.rules.requirePhoneNumber = required;
+    this.rules = { ...this.rules, requirePhoneNumber: required };
     return this;
   }
 
@@ -739,7 +739,7 @@ export class ValidationRuleBuilder {
    * Require company name
    */
   requireCompanyName(required: boolean = true): ValidationRuleBuilder {
-    this.rules.requireCompanyName = required;
+    this.rules = { ...this.rules, requireCompanyName: required };
     return this;
   }
 
@@ -747,7 +747,23 @@ export class ValidationRuleBuilder {
    * Set required fields
    */
   requiredFields(fields: string[]): ValidationRuleBuilder {
-    this.rules.requiredFields = fields;
+    this.rules = { ...this.rules, requiredFields: fields };
+    return this;
+  }
+
+  /**
+   * Set return URL
+   */
+  returnUrl(url: string): ValidationRuleBuilder {
+    this.rules = { ...this.rules, returnUrl: url };
+    return this;
+  }
+
+  /**
+   * Set cancel URL
+   */
+  cancelUrl(url: string): ValidationRuleBuilder {
+    this.rules = { ...this.rules, cancelUrl: url };
     return this;
   }
 
@@ -755,14 +771,34 @@ export class ValidationRuleBuilder {
    * Build the validation rules
    */
   build(): CheckoutValidationRules {
-    return {
-      minimumOrderAmount: 0,
-      requireEmail: false,
-      requirePhoneNumber: false,
-      requireCompanyName: false,
-      requiredFields: [],
-      ...this.rules
+    const rules: CheckoutValidationRules = {
+      requireShippingAddress: this.rules.requireShippingAddress ?? true,
+      requireBillingAddress: this.rules.requireBillingAddress ?? true,
+      requirePhoneNumber: this.rules.requirePhoneNumber ?? false,
+      requireCompanyName: this.rules.requireCompanyName ?? false,
+      allowGuestCheckout: this.rules.allowGuestCheckout ?? true,
+      restrictedCountries: this.rules.restrictedCountries ?? [],
+      requiredFields: this.rules.requiredFields ?? []
     };
+
+    // Handle optional properties for exactOptionalPropertyTypes
+    if (this.rules.requireEmail !== undefined) {
+      (rules as any).requireEmail = this.rules.requireEmail;
+    }
+    if (this.rules.minimumOrderAmount !== undefined) {
+      (rules as any).minimumOrderAmount = this.rules.minimumOrderAmount;
+    }
+    if (this.rules.maximumOrderAmount !== undefined) {
+      (rules as any).maximumOrderAmount = this.rules.maximumOrderAmount;
+    }
+    if (this.rules.returnUrl !== undefined) {
+      (rules as any).returnUrl = this.rules.returnUrl;
+    }
+    if (this.rules.cancelUrl !== undefined) {
+      (rules as any).cancelUrl = this.rules.cancelUrl;
+    }
+
+    return rules;
   }
 }
 

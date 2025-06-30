@@ -12,13 +12,11 @@ import {
   CheckoutSession,
   CheckoutValidationRules,
   CheckoutStep,
-  CheckoutStepType,
   BillingAddress,
   ShippingAddress,
   SelectedShippingMethod,
   PaymentMethod,
-  Order,
-  OrderStatus
+  Order
 } from '../../types/checkout';
 import { Cart } from '../../types/cart';
 
@@ -26,8 +24,7 @@ import { Cart } from '../../types/cart';
 import { 
   AddressManager, 
   AddressFieldRequirements, 
-  AddressValidationContext,
-  DEFAULT_ADDRESS_MANAGER 
+  AddressValidationContext
 } from './address';
 import { 
   ShippingService, 
@@ -39,9 +36,7 @@ import {
 } from './shipping';
 import { 
   PaymentService, 
-  PaymentInitRequest, 
-  PaymentInitResponse,
-  PaymentStatusResponse,
+  PaymentInitRequest,
   PaymentConfig,
   DEFAULT_PAYMENT_CONFIG 
 } from './payment';
@@ -109,8 +104,6 @@ export interface CheckoutInitOptions {
  * Main checkout service integrating all components
  */
 class CheckoutService {
-  private readonly client: HttpClient;
-  private readonly cache: CacheManager;
   private readonly config: CheckoutConfig;
 
   // Service instances
@@ -129,8 +122,6 @@ class CheckoutService {
     cache: CacheManager,
     config: CheckoutConfig = {}
   ) {
-    this.client = client;
-    this.cache = cache;
     this.config = config;
 
     // Initialize service instances

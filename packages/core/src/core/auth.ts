@@ -4,7 +4,7 @@
  */
 
 import { Result, Ok, Err } from '../types/result';
-import { WooError, AuthError, ErrorFactory } from '../types/errors';
+import { WooError, ErrorFactory } from '../types/errors';
 import { JWTConfig, ResolvedWooConfig } from '../types/config';
 
 /**

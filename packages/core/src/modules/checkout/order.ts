@@ -11,8 +11,6 @@ import { WooError, ErrorFactory } from '../../types/errors';
 import { 
   Order,
   OrderStatus,
-  OrderLineItem,
-  OrderTotals,
   CheckoutSession,
   BillingAddress,
   ShippingAddress

@@ -144,6 +144,8 @@ export interface SelectedShippingMethod {
   readonly zoneId: string;
   readonly methodId: string;
   readonly rate: ShippingRate;
+  readonly title: string;
+  readonly cost: number;
 }
 
 /**
@@ -213,6 +215,7 @@ export interface Order {
   readonly discountTotal: number;
   readonly discountTax: number;
   readonly feeTotal: number;
+  readonly feeTax: number;
   readonly customerId: number;
   readonly customerNote?: string;
   readonly billingAddress: BillingAddress;
@@ -231,6 +234,10 @@ export interface Order {
  * Checkout step types
  */
 export type CheckoutStepType = 
+  | 'address'
+  | 'shipping'
+  | 'payment'
+  | 'review'
   | 'cart_review'
   | 'shipping_address'
   | 'billing_address'
@@ -305,6 +312,8 @@ export interface CheckoutValidationRules {
   readonly maximumOrderAmount?: number;
   readonly restrictedCountries: readonly string[];
   readonly requiredFields: readonly string[];
+  readonly returnUrl?: string;
+  readonly cancelUrl?: string;
 }
 
 /**

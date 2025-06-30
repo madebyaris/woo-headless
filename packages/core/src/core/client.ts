@@ -5,12 +5,7 @@
 
 import { Result, Ok, Err } from '../types/result';
 import { 
-  WooError, 
-  NetworkError, 
-  ApiError, 
-  TimeoutError, 
-  RateLimitError,
-  AuthError,
+  WooError,
   ErrorFactory 
 } from '../types/errors';
 import { HttpConfig, ResolvedWooConfig } from '../types/config';

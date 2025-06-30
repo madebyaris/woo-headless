@@ -74,6 +74,10 @@ export class ConfigManager {
       userSync: {
         ...DEFAULT_CONFIG.userSync,
         ...config.userSync
+      },
+      checkout: {
+        ...DEFAULT_CONFIG.checkout,
+        ...config.checkout
       }
     };
 
