@@ -602,9 +602,9 @@ export class CartSyncManager {
    */
   private async resolveConflicts(
     localCart: Cart,
-    serverCart: Cart,
-    conflicts: readonly CartSyncConflict[],
-    strategy: CartSyncStrategy
+    _serverCart: Cart,
+    _conflicts: readonly CartSyncConflict[],
+    _strategy: CartSyncStrategy
   ): Promise<Result<Cart, CartError>> {
     // For now, conflicts are auto-resolved during merge
     // In the future, this could prompt the user or apply more sophisticated resolution
@@ -659,8 +659,8 @@ export class CartSyncManager {
    */
   private async processQueueItem(
     item: CartSyncQueueItem,
-    localCart: Cart,
-    authContext: UserAuthContext
+    _localCart: Cart,
+    _authContext: UserAuthContext
   ): Promise<void> {
     // This is a placeholder for processing offline actions
     // In a real implementation, this would replay the action on the server

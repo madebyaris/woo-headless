@@ -2725,7 +2725,7 @@ class CartSyncManager {
   /**
    * Resolve conflicts based on strategy
    */
-  async resolveConflicts(localCart, serverCart, conflicts, strategy) {
+  async resolveConflicts(localCart, _serverCart, _conflicts, _strategy) {
     return Ok(localCart);
   }
   /**
@@ -2763,7 +2763,7 @@ class CartSyncManager {
   /**
    * Process individual queue item
    */
-  async processQueueItem(item, localCart, authContext) {
+  async processQueueItem(item, _localCart, _authContext) {
     console.warn("Cart sync queue processing not yet implemented for action:", item.action);
   }
   /**
@@ -3273,7 +3273,7 @@ class CartTotalsCalculator {
       return cartContentsTotal + shippingTotal + feeTotal + totalTax;
     }
   }
-  getDefaultTaxRate(country, state) {
+  getDefaultTaxRate(country, _state) {
     const defaultRates = {
       "US": 0.0875,
       // Average US sales tax
@@ -3755,7 +3755,7 @@ class CartService {
   /**
    * Validate quantity limits for cart item
    */
-  validateItemQuantityLimits(item, currentProduct, errors, warnings) {
+  validateItemQuantityLimits(item, _currentProduct, errors, _warnings) {
     if (item.quantityLimits) {
       const { min, max, step } = item.quantityLimits;
       if (item.quantity < min) {
@@ -3826,7 +3826,7 @@ class CartService {
   /**
    * Validate product variation
    */
-  async validateProductVariation(item, currentProduct, errors) {
+  async validateProductVariation(item, _currentProduct, errors) {
     try {
       if (!item.variationId) {
         errors.push({
@@ -8106,7 +8106,11 @@ class AddressManager {
     };
     const overrides = {};
     if (context.fieldRequirements) {
-      Object.assign(overrides, context.fieldRequirements);
+      Object.entries(context.fieldRequirements).forEach(([key, value]) => {
+        if (value !== void 0) {
+          overrides[key] = value;
+        }
+      });
     }
     if (context.checkoutRules) {
       if (context.checkoutRules.requireCompanyName) {
@@ -9429,7 +9433,7 @@ function createValidationRules() {
   return new ValidationRuleBuilder();
 }
 class CheckoutFlowManager {
-  constructor(addressManager, shippingService, paymentService, validationService, config, eventHandlers = {}) {
+  constructor(_addressManager, _shippingService, paymentService, validationService, config, eventHandlers = {}) {
     this.paymentService = paymentService;
     this.validationService = validationService;
     this.config = config;
@@ -9458,7 +9462,7 @@ class CheckoutFlowManager {
         cartId: cart.sessionId,
         isGuestCheckout,
         orderTotals,
-        flow: this.createEmptyCheckoutFlow(),
+        flow: this.createEmptyFlow(),
         expiresAt: new Date(Date.now() + this.config.sessionTimeout * 60 * 1e3),
         createdAt: /* @__PURE__ */ new Date(),
         updatedAt: /* @__PURE__ */ new Date()
@@ -10001,6 +10005,34 @@ class CheckoutFlowManager {
    */
   generateOrderId() {
     return Date.now();
+  }
+  /**
+   * Create empty checkout flow
+   */
+  createEmptyFlow() {
+    return {
+      steps: this.config.steps.map((type, index) => ({
+        id: index + 1,
+        type,
+        status: "pending",
+        isRequired: !this.isStepOptional(type),
+        isCompleted: false,
+        canSkip: this.isStepOptional(type) && this.config.allowSkipOptional,
+        validationErrors: [],
+        data: {}
+      })),
+      currentStepIndex: 0,
+      totalSteps: this.config.steps.length,
+      isCompleted: false,
+      completedAt: void 0
+    };
+  }
+  /**
+   * Check if step is optional
+   */
+  isStepOptional(stepType) {
+    const optionalSteps = ["shipping", "billing_different"];
+    return optionalSteps.includes(stepType);
   }
 }
 const DEFAULT_CHECKOUT_FLOW_CONFIG = {
@@ -10691,7 +10723,7 @@ class CheckoutService {
   /**
    * Validate address
    */
-  async validateAddress(address, type) {
+  async validateAddress(_address, type) {
     if (!this.currentCart) {
       return Err(ErrorFactory.validationError("Checkout not initialized"));
     }

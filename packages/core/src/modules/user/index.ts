@@ -25,13 +25,8 @@ import {
   AddressValidationResult,
 
 
-  UserProfileSchema,
-  UserAddressSchema,
-  UserPreferencesSchema,
+
   UserSyncRequestSchema,
-  UserAuthContextSchema,
-  isUserProfile,
-  isUserAddress,
   isUserAuthContext
 } from '../../types/user';
 import { generateId } from '../../test/utils';

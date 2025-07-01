@@ -417,10 +417,14 @@ export class AddressManager {
     };
 
     // Apply context-specific overrides and checkout rules
-    const overrides: Partial<AddressFieldRequirements> = {};
+    const overrides: Record<string, boolean> = {};
     
     if (context.fieldRequirements) {
-      Object.assign(overrides, context.fieldRequirements);
+      Object.entries(context.fieldRequirements).forEach(([key, value]) => {
+        if (value !== undefined) {
+          overrides[key] = value;
+        }
+      });
     }
 
     if (context.checkoutRules) {

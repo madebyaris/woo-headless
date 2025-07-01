@@ -342,7 +342,7 @@ class CheckoutService {
    * Validate address
    */
   async validateAddress(
-    address: BillingAddress | ShippingAddress, 
+    _address: BillingAddress | ShippingAddress, 
     type: 'billing' | 'shipping'
   ): Promise<Result<ValidationResult, WooError>> {
     if (!this.currentCart) {

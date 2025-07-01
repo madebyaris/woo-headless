@@ -624,7 +624,7 @@ class CartTotalsCalculator {
     }
   }
 
-  private getDefaultTaxRate(country?: string, state?: string): number {
+  private getDefaultTaxRate(country?: string, _state?: string): number {
     // Default tax rates by country/state
     // In a real implementation, this would come from a tax service or database
     const defaultRates: Record<string, number> = {
@@ -1322,14 +1322,14 @@ export class CartService {
    */
   private validateItemQuantityLimits(
     item: CartItem,
-    currentProduct: WooCommerceProduct,
+    _currentProduct: WooCommerceProduct,
     errors: Array<{
       readonly itemKey: string;
       readonly code: 'INVALID_QUANTITY';
       readonly message: string;
       readonly requestedQuantity: number;
     }>,
-    warnings: Array<{
+    _warnings: Array<{
       readonly itemKey: string;
       readonly code: 'INVALID_QUANTITY';
       readonly message: string;
@@ -1431,7 +1431,7 @@ export class CartService {
    */
   private async validateProductVariation(
     item: CartItem,
-    currentProduct: WooCommerceProduct,
+    _currentProduct: WooCommerceProduct,
     errors: Array<{
       readonly itemKey: string;
       readonly code: 'VARIATION_NOT_FOUND';

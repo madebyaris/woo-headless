@@ -92,8 +92,8 @@ export class CheckoutFlowManager {
   private sessionId: string;
 
   constructor(
-    addressManager: AddressManager,
-    shippingService: ShippingService,
+    _addressManager: AddressManager,
+    _shippingService: ShippingService,
     paymentService: PaymentService,
     validationService: CheckoutValidationService,
     config: CheckoutFlowConfig,
@@ -132,7 +132,7 @@ export class CheckoutFlowManager {
         cartId: cart.sessionId,
         isGuestCheckout,
         orderTotals,
-        flow: this.createEmptyCheckoutFlow(),
+        flow: this.createEmptyFlow(),
         expiresAt: new Date(Date.now() + this.config.sessionTimeout * 60 * 1000),
         createdAt: new Date(),
         updatedAt: new Date()
@@ -781,6 +781,36 @@ export class CheckoutFlowManager {
    */
   private generateOrderId(): number {
     return Date.now(); // Simple numeric ID based on timestamp
+  }
+
+  /**
+   * Create empty checkout flow
+   */
+  private createEmptyFlow(): CheckoutFlow {
+    return {
+      steps: this.config.steps.map((type, index) => ({
+        id: index + 1,
+        type,
+        status: 'pending',
+        isRequired: !this.isStepOptional(type),
+        isCompleted: false,
+        canSkip: this.isStepOptional(type) && this.config.allowSkipOptional,
+        validationErrors: [],
+        data: {}
+      })),
+      currentStepIndex: 0,
+      totalSteps: this.config.steps.length,
+      isCompleted: false,
+      completedAt: undefined
+    };
+  }
+
+  /**
+   * Check if step is optional
+   */
+  private isStepOptional(stepType: CheckoutStepType): boolean {
+    const optionalSteps: CheckoutStepType[] = ['shipping', 'billing_different'];
+    return optionalSteps.includes(stepType);
   }
 }
 

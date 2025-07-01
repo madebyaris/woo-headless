@@ -950,7 +950,7 @@ declare class CheckoutService {
     /**
      * Validate address
      */
-    validateAddress(address: BillingAddress_2 | ShippingAddress_2, type: 'billing' | 'shipping'): Promise<Result<ValidationResult, WooError>>;
+    validateAddress(_address: BillingAddress_2 | ShippingAddress_2, type: 'billing' | 'shipping'): Promise<Result<ValidationResult, WooError>>;
     /**
      * Get address suggestions
      */

@@ -11,15 +11,8 @@ import { WooError, ErrorFactory } from '../../types/errors';
 import { 
   PaymentMethod,
   PaymentMethodType,
-  PaymentTransaction,
-  CreditCard,
-  Order,
-  OrderTotals,
-  PaymentRequest,
   PaymentInitRequest,
-  PaymentStatusRequest,
-  PaymentCallbackData,
-  CheckoutSession
+  PaymentCallbackData
 } from '../../types/checkout';
 
 /**
