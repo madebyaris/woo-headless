@@ -1689,7 +1689,6 @@ export class CartService {
       // Apply coupon and recalculate totals
       const couponToApply: AppliedCoupon = {
         code: validationResult.coupon!.code,
-        type: validationResult.coupon!.discount_type || 'fixed_cart',
         amount: parseFloat(validationResult.coupon!.amount || '0'),
         description: validationResult.coupon!.description || '',
         discountType: validationResult.coupon!.discount_type || 'fixed_cart',
@@ -1698,9 +1697,8 @@ export class CartService {
         maximumAmount: validationResult.coupon!.maximum_amount ? parseFloat(validationResult.coupon!.maximum_amount) : undefined,
         usageCount: validationResult.coupon!.usage_count || 0,
         usageLimit: validationResult.coupon!.usage_limit || undefined,
-        expiryDate: validationResult.coupon!.date_expires ? new Date(validationResult.coupon!.date_expires) : undefined,
-        individualUse: validationResult.coupon!.individual_use || false,
-        excludeSaleItems: validationResult.coupon!.exclude_sale_items || false
+        ...(validationResult.coupon!.date_expires && { expiryDate: new Date(validationResult.coupon!.date_expires) }),
+        individualUse: validationResult.coupon!.individual_use || false
       };
       
       const appliedCoupons = [...cartData.appliedCoupons, couponToApply];
@@ -2114,7 +2112,6 @@ export class CartService {
     request: CartAddItemRequest, 
     itemKey: string
   ): CartItem {
-    const now = new Date();
     const price = parseFloat(product.price) || 0;
     const regularPrice = parseFloat(product.regular_price) || 0;
     const salePrice = product.sale_price ? parseFloat(product.sale_price) : undefined;
@@ -2135,6 +2132,7 @@ export class CartService {
       weight: product.weight ? parseFloat(product.weight) : undefined,
       stockQuantity: product.stock_quantity || undefined,
       stockStatus: product.stock_status,
+      backorders: product.backorders || 'no',
       backordersAllowed: product.backorders_allowed || false,
       soldIndividually: product.sold_individually || false,
       downloadable: product.downloadable || false,

@@ -135,7 +135,7 @@ export class CartSyncManager {
 
     try {
       // Fetch server cart
-      const serverCartResult = await this.fetchServerCart(authContext.userId);
+      const serverCartResult = await this.fetchServerCart(authContext.userId.toString());
       if (!serverCartResult.success) {
         this.setSyncStatus('failed');
         this.notifyEventHandlers('onSyncError', serverCartResult.error);

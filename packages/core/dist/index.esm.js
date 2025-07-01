@@ -2372,7 +2372,7 @@ class CartSyncManager {
     this.setSyncStatus("syncing");
     this.notifyEventHandlers("onSyncStart");
     try {
-      const serverCartResult = await this.fetchServerCart(authContext.userId);
+      const serverCartResult = await this.fetchServerCart(authContext.userId.toString());
       if (!serverCartResult.success) {
         this.setSyncStatus("failed");
         this.notifyEventHandlers("onSyncError", serverCartResult.error);
@@ -4001,7 +4001,6 @@ class CartService {
       }
       const couponToApply = {
         code: validationResult.coupon.code,
-        type: validationResult.coupon.discount_type || "fixed_cart",
         amount: parseFloat(validationResult.coupon.amount || "0"),
         description: validationResult.coupon.description || "",
         discountType: validationResult.coupon.discount_type || "fixed_cart",
@@ -4010,9 +4009,8 @@ class CartService {
         maximumAmount: validationResult.coupon.maximum_amount ? parseFloat(validationResult.coupon.maximum_amount) : void 0,
         usageCount: validationResult.coupon.usage_count || 0,
         usageLimit: validationResult.coupon.usage_limit || void 0,
-        expiryDate: validationResult.coupon.date_expires ? new Date(validationResult.coupon.date_expires) : void 0,
-        individualUse: validationResult.coupon.individual_use || false,
-        excludeSaleItems: validationResult.coupon.exclude_sale_items || false
+        ...validationResult.coupon.date_expires && { expiryDate: new Date(validationResult.coupon.date_expires) },
+        individualUse: validationResult.coupon.individual_use || false
       };
       const appliedCoupons = [...cartData.appliedCoupons, couponToApply];
       const updatedTotals = this.calculator.calculate(
@@ -4343,6 +4341,7 @@ class CartService {
       weight: product.weight ? parseFloat(product.weight) : void 0,
       stockQuantity: product.stock_quantity || void 0,
       stockStatus: product.stock_status,
+      backorders: product.backorders || "no",
       backordersAllowed: product.backorders_allowed || false,
       soldIndividually: product.sold_individually || false,
       downloadable: product.downloadable || false,
