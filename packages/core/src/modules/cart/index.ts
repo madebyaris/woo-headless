@@ -1263,7 +1263,7 @@ export class CartService {
     if (currentProduct.manage_stock && currentProduct.stock_quantity !== null) {
       const availableStock = currentProduct.stock_quantity;
       
-      if (item.quantity > availableStock) {
+      if (availableStock != null && item.quantity > availableStock) {
         if (availableStock === 0) {
           errors.push({
             itemKey: item.key,
@@ -1489,7 +1489,7 @@ export class CartService {
       readonly message: string;
       readonly details?: Record<string, unknown>;
     }>
-  ): void {
+  ): Promise<void> {
     // Validate maximum number of items
     if (cart.items.length > this.config.maxItems) {
       errors.push({
@@ -1548,7 +1548,7 @@ export class CartService {
       readonly message: string;
       readonly details: Record<string, unknown>;
     }>
-  ): void {
+  ): Promise<void> {
     for (const coupon of cart.appliedCoupons) {
       try {
         // Validate coupon expiry
@@ -1687,7 +1687,44 @@ export class CartService {
       }
 
       // Apply coupon and recalculate totals
-      const updatedCart = await this.recalculateWithCoupon(cartData, validationResult.coupon!);
+      const couponToApply: AppliedCoupon = {
+        code: validationResult.coupon!.code,
+        type: validationResult.coupon!.discount_type || 'fixed_cart',
+        amount: parseFloat(validationResult.coupon!.amount || '0'),
+        description: validationResult.coupon!.description || '',
+        discountType: validationResult.coupon!.discount_type || 'fixed_cart',
+        freeShipping: validationResult.coupon!.free_shipping || false,
+        minimumAmount: validationResult.coupon!.minimum_amount ? parseFloat(validationResult.coupon!.minimum_amount) : undefined,
+        maximumAmount: validationResult.coupon!.maximum_amount ? parseFloat(validationResult.coupon!.maximum_amount) : undefined,
+        usageCount: validationResult.coupon!.usage_count || 0,
+        usageLimit: validationResult.coupon!.usage_limit || undefined,
+        expiryDate: validationResult.coupon!.date_expires ? new Date(validationResult.coupon!.date_expires) : undefined,
+        individualUse: validationResult.coupon!.individual_use || false,
+        excludeSaleItems: validationResult.coupon!.exclude_sale_items || false
+      };
+      
+      const appliedCoupons = [...cartData.appliedCoupons, couponToApply];
+      const updatedTotals = this.calculator.calculate(
+        cartData.items,
+        appliedCoupons,
+        cartData.shippingMethods,
+        cartData.fees
+      );
+      
+      const updatedCart: Cart = {
+        ...cartData,
+        appliedCoupons,
+        totals: updatedTotals,
+        updatedAt: new Date()
+      };
+      
+      // Save the updated cart
+      const saveResult = await this.persistence.save(updatedCart);
+      if (!saveResult.success) {
+        return saveResult;
+      }
+      
+      this.currentCart = updatedCart;
       return Ok(updatedCart);
     } catch (error) {
       return Err(ErrorFactory.networkError(
@@ -1780,7 +1817,7 @@ export class CartService {
       // Fetch available coupons from API
       const response = await this.client.get<WooCommerceCoupon[]>('/coupons', {
         status: 'publish',
-        per_page: 100, // Adjust as needed
+        per_page: '100', // Adjust as needed
         orderby: 'date',
         order: 'desc'
       });
@@ -2102,7 +2139,7 @@ export class CartService {
       soldIndividually: product.sold_individually || false,
       downloadable: product.downloadable || false,
       virtual: product.virtual || false,
-      meta: {},
+      meta: [],
       addedAt: new Date(),
       updatedAt: new Date()
     };

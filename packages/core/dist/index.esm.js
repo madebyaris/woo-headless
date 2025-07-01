@@ -3708,7 +3708,7 @@ class CartService {
     }
     if (currentProduct.manage_stock && currentProduct.stock_quantity !== null) {
       const availableStock = currentProduct.stock_quantity;
-      if (item.quantity > availableStock) {
+      if (availableStock != null && item.quantity > availableStock) {
         if (availableStock === 0) {
           errors.push({
             itemKey: item.key,
@@ -3999,7 +3999,39 @@ class CartService {
       if (!validationResult.valid) {
         return Err(ErrorFactory.validationError(validationResult.reason || "Invalid coupon"));
       }
-      const updatedCart = await this.recalculateWithCoupon(cartData, validationResult.coupon);
+      const couponToApply = {
+        code: validationResult.coupon.code,
+        type: validationResult.coupon.discount_type || "fixed_cart",
+        amount: parseFloat(validationResult.coupon.amount || "0"),
+        description: validationResult.coupon.description || "",
+        discountType: validationResult.coupon.discount_type || "fixed_cart",
+        freeShipping: validationResult.coupon.free_shipping || false,
+        minimumAmount: validationResult.coupon.minimum_amount ? parseFloat(validationResult.coupon.minimum_amount) : void 0,
+        maximumAmount: validationResult.coupon.maximum_amount ? parseFloat(validationResult.coupon.maximum_amount) : void 0,
+        usageCount: validationResult.coupon.usage_count || 0,
+        usageLimit: validationResult.coupon.usage_limit || void 0,
+        expiryDate: validationResult.coupon.date_expires ? new Date(validationResult.coupon.date_expires) : void 0,
+        individualUse: validationResult.coupon.individual_use || false,
+        excludeSaleItems: validationResult.coupon.exclude_sale_items || false
+      };
+      const appliedCoupons = [...cartData.appliedCoupons, couponToApply];
+      const updatedTotals = this.calculator.calculate(
+        cartData.items,
+        appliedCoupons,
+        cartData.shippingMethods,
+        cartData.fees
+      );
+      const updatedCart = {
+        ...cartData,
+        appliedCoupons,
+        totals: updatedTotals,
+        updatedAt: /* @__PURE__ */ new Date()
+      };
+      const saveResult = await this.persistence.save(updatedCart);
+      if (!saveResult.success) {
+        return saveResult;
+      }
+      this.currentCart = updatedCart;
       return Ok(updatedCart);
     } catch (error) {
       return Err(ErrorFactory.networkError(
@@ -4069,7 +4101,7 @@ class CartService {
       const cart = cartResult.data;
       const response = await this.client.get("/coupons", {
         status: "publish",
-        per_page: 100,
+        per_page: "100",
         // Adjust as needed
         orderby: "date",
         order: "desc"
@@ -4315,7 +4347,7 @@ class CartService {
       soldIndividually: product.sold_individually || false,
       downloadable: product.downloadable || false,
       virtual: product.virtual || false,
-      meta: {},
+      meta: [],
       addedAt: /* @__PURE__ */ new Date(),
       updatedAt: /* @__PURE__ */ new Date()
     };
