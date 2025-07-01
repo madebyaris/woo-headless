@@ -475,7 +475,17 @@ export class PaymentService {
    */
   async clearPaymentCache(): Promise<Result<void, WooError>> {
     try {
-      await this.cache.invalidatePattern('payment-');
+      // Clear specific payment cache keys
+      const cacheKeys = [
+        'payment-methods',
+        'payment-status',
+        'payment-validation'
+      ];
+      
+      for (const key of cacheKeys) {
+        await this.cache.delete(key);
+      }
+      
       return Ok(undefined);
     } catch (error) {
       return Err(ErrorFactory.cacheError(

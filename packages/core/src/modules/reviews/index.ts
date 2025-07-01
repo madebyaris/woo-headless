@@ -7,6 +7,7 @@ import { HttpClient } from '../../core/client';
 import { CacheManager } from '../../core/cache';
 import { Result, Ok, Err } from '../../types/result';
 import { WooError, ErrorFactory } from '../../types/errors';
+import { z } from 'zod';
 import { 
   ProductReview,
   CreateReviewRequest,

@@ -1,4 +1,4 @@
-import { z as z$1 } from "zod";
+import { z } from "zod";
 import Fuse from "fuse.js";
 function Ok(data) {
   return { success: true, data };
@@ -216,52 +216,52 @@ class CacheError extends Error {
 function isWooError(error) {
   return error !== null && typeof error === "object" && "code" in error && "message" in error && "timestamp" in error;
 }
-const ProductSchema = z$1.object({
-  id: z$1.number(),
-  name: z$1.string(),
-  slug: z$1.string(),
-  status: z$1.enum(["draft", "pending", "private", "publish"]),
-  featured: z$1.boolean(),
-  catalog_visibility: z$1.enum(["visible", "catalog", "search", "hidden"]),
-  description: z$1.string(),
-  short_description: z$1.string(),
-  price: z$1.string(),
-  regular_price: z$1.string(),
-  sale_price: z$1.string(),
-  on_sale: z$1.boolean(),
-  stock_status: z$1.enum(["instock", "outofstock", "onbackorder"]),
-  manage_stock: z$1.boolean(),
-  stock_quantity: z$1.number().optional(),
-  categories: z$1.array(z$1.object({
-    id: z$1.number(),
-    name: z$1.string(),
-    slug: z$1.string()
+const ProductSchema = z.object({
+  id: z.number(),
+  name: z.string(),
+  slug: z.string(),
+  status: z.enum(["draft", "pending", "private", "publish"]),
+  featured: z.boolean(),
+  catalog_visibility: z.enum(["visible", "catalog", "search", "hidden"]),
+  description: z.string(),
+  short_description: z.string(),
+  price: z.string(),
+  regular_price: z.string(),
+  sale_price: z.string(),
+  on_sale: z.boolean(),
+  stock_status: z.enum(["instock", "outofstock", "onbackorder"]),
+  manage_stock: z.boolean(),
+  stock_quantity: z.number().optional(),
+  categories: z.array(z.object({
+    id: z.number(),
+    name: z.string(),
+    slug: z.string()
   })),
-  images: z$1.array(z$1.object({
-    id: z$1.number(),
-    src: z$1.string(),
-    name: z$1.string(),
-    alt: z$1.string()
+  images: z.array(z.object({
+    id: z.number(),
+    src: z.string(),
+    name: z.string(),
+    alt: z.string()
   }))
 });
-const OrderSchema = z$1.object({
-  id: z$1.number(),
-  status: z$1.enum(["pending", "processing", "on-hold", "completed", "cancelled", "refunded", "failed", "trash"]),
-  currency: z$1.string(),
-  total: z$1.string(),
-  customer_id: z$1.number(),
-  billing: z$1.object({
-    first_name: z$1.string(),
-    last_name: z$1.string(),
-    email: z$1.string(),
-    phone: z$1.string()
+const OrderSchema = z.object({
+  id: z.number(),
+  status: z.enum(["pending", "processing", "on-hold", "completed", "cancelled", "refunded", "failed", "trash"]),
+  currency: z.string(),
+  total: z.string(),
+  customer_id: z.number(),
+  billing: z.object({
+    first_name: z.string(),
+    last_name: z.string(),
+    email: z.string(),
+    phone: z.string()
   }),
-  line_items: z$1.array(z$1.object({
-    id: z$1.number(),
-    name: z$1.string(),
-    product_id: z$1.number(),
-    quantity: z$1.number(),
-    total: z$1.string()
+  line_items: z.array(z.object({
+    id: z.number(),
+    name: z.string(),
+    product_id: z.number(),
+    quantity: z.number(),
+    total: z.string()
   }))
 });
 function isWooCommerceProduct(data) {
@@ -2179,119 +2179,119 @@ class ProductService {
     return queryParams;
   }
 }
-const CartItemMetaSchema = z$1.object({
-  key: z$1.string(),
-  value: z$1.string(),
-  displayKey: z$1.string().optional(),
-  displayValue: z$1.string().optional()
+const CartItemMetaSchema = z.object({
+  key: z.string(),
+  value: z.string(),
+  displayKey: z.string().optional(),
+  displayValue: z.string().optional()
 });
-const CartQuantityLimitsSchema = z$1.object({
-  min: z$1.number().min(0),
-  max: z$1.number().min(1),
-  step: z$1.number().min(1)
+const CartQuantityLimitsSchema = z.object({
+  min: z.number().min(0),
+  max: z.number().min(1),
+  step: z.number().min(1)
 });
-const CartItemSchema = z$1.object({
-  key: z$1.string(),
-  productId: z$1.number().positive(),
-  variationId: z$1.number().positive().optional(),
-  quantity: z$1.number().positive(),
-  name: z$1.string(),
-  price: z$1.number().min(0),
-  regularPrice: z$1.number().min(0),
-  salePrice: z$1.number().min(0).optional(),
-  totalPrice: z$1.number().min(0),
-  total: z$1.number().min(0),
-  sku: z$1.string().optional(),
-  weight: z$1.number().min(0).optional(),
-  dimensions: z$1.object({
-    length: z$1.string(),
-    width: z$1.string(),
-    height: z$1.string()
+const CartItemSchema = z.object({
+  key: z.string(),
+  productId: z.number().positive(),
+  variationId: z.number().positive().optional(),
+  quantity: z.number().positive(),
+  name: z.string(),
+  price: z.number().min(0),
+  regularPrice: z.number().min(0),
+  salePrice: z.number().min(0).optional(),
+  totalPrice: z.number().min(0),
+  total: z.number().min(0),
+  sku: z.string().optional(),
+  weight: z.number().min(0).optional(),
+  dimensions: z.object({
+    length: z.string(),
+    width: z.string(),
+    height: z.string()
   }).optional(),
-  image: z$1.object({
-    id: z$1.number().positive(),
-    src: z$1.string().url(),
-    alt: z$1.string()
+  image: z.object({
+    id: z.number().positive(),
+    src: z.string().url(),
+    alt: z.string()
   }).optional(),
-  stockQuantity: z$1.number().min(0).optional(),
-  stockStatus: z$1.enum(["instock", "outofstock", "onbackorder"]),
-  backorders: z$1.enum(["no", "notify", "yes"]),
+  stockQuantity: z.number().min(0).optional(),
+  stockStatus: z.enum(["instock", "outofstock", "onbackorder"]),
+  backorders: z.enum(["no", "notify", "yes"]),
   quantityLimits: CartQuantityLimitsSchema.optional(),
-  meta: z$1.array(CartItemMetaSchema).optional(),
-  attributes: z$1.record(z$1.string()).optional(),
-  addedAt: z$1.date(),
-  updatedAt: z$1.date()
+  meta: z.array(CartItemMetaSchema).optional(),
+  attributes: z.record(z.string()).optional(),
+  addedAt: z.date(),
+  updatedAt: z.date()
 });
-const CartTotalsSchema = z$1.object({
-  subtotal: z$1.number().min(0),
-  subtotalTax: z$1.number().min(0),
-  shippingTotal: z$1.number().min(0),
-  shippingTax: z$1.number().min(0),
-  discountTotal: z$1.number().min(0),
-  discountTax: z$1.number().min(0),
-  cartContentsTotal: z$1.number().min(0),
-  cartContentsTax: z$1.number().min(0),
-  feeTotal: z$1.number().min(0),
-  feeTax: z$1.number().min(0),
-  total: z$1.number().min(0),
-  totalTax: z$1.number().min(0)
+const CartTotalsSchema = z.object({
+  subtotal: z.number().min(0),
+  subtotalTax: z.number().min(0),
+  shippingTotal: z.number().min(0),
+  shippingTax: z.number().min(0),
+  discountTotal: z.number().min(0),
+  discountTax: z.number().min(0),
+  cartContentsTotal: z.number().min(0),
+  cartContentsTax: z.number().min(0),
+  feeTotal: z.number().min(0),
+  feeTax: z.number().min(0),
+  total: z.number().min(0),
+  totalTax: z.number().min(0)
 });
-const AppliedCouponSchema = z$1.object({
-  code: z$1.string(),
-  discountType: z$1.enum(["percent", "fixed_cart", "fixed_product"]),
-  amount: z$1.number().min(0),
-  description: z$1.string().optional(),
-  freeShipping: z$1.boolean(),
-  expiryDate: z$1.date().optional(),
-  usageLimit: z$1.number().positive().optional(),
-  usageCount: z$1.number().min(0),
-  individualUse: z$1.boolean(),
-  productIds: z$1.array(z$1.number().positive()).optional(),
-  excludedProductIds: z$1.array(z$1.number().positive()).optional(),
-  categoryIds: z$1.array(z$1.number().positive()).optional(),
-  excludedCategoryIds: z$1.array(z$1.number().positive()).optional(),
-  minimumAmount: z$1.number().min(0).optional(),
-  maximumAmount: z$1.number().min(0).optional()
+const AppliedCouponSchema = z.object({
+  code: z.string(),
+  discountType: z.enum(["percent", "fixed_cart", "fixed_product"]),
+  amount: z.number().min(0),
+  description: z.string().optional(),
+  freeShipping: z.boolean(),
+  expiryDate: z.date().optional(),
+  usageLimit: z.number().positive().optional(),
+  usageCount: z.number().min(0),
+  individualUse: z.boolean(),
+  productIds: z.array(z.number().positive()).optional(),
+  excludedProductIds: z.array(z.number().positive()).optional(),
+  categoryIds: z.array(z.number().positive()).optional(),
+  excludedCategoryIds: z.array(z.number().positive()).optional(),
+  minimumAmount: z.number().min(0).optional(),
+  maximumAmount: z.number().min(0).optional()
 });
-const CartSchema = z$1.object({
-  items: z$1.array(CartItemSchema),
-  itemCount: z$1.number().min(0),
+const CartSchema = z.object({
+  items: z.array(CartItemSchema),
+  itemCount: z.number().min(0),
   totals: CartTotalsSchema,
-  appliedCoupons: z$1.array(AppliedCouponSchema),
-  shippingMethods: z$1.array(z$1.any()),
+  appliedCoupons: z.array(AppliedCouponSchema),
+  shippingMethods: z.array(z.any()),
   // TODO: Define shipping method schema
-  chosenShippingMethods: z$1.array(z$1.string()),
-  fees: z$1.array(z$1.any()),
+  chosenShippingMethods: z.array(z.string()),
+  fees: z.array(z.any()),
   // TODO: Define fee schema
-  needsShipping: z$1.boolean(),
-  needsPayment: z$1.boolean(),
-  hasCalculatedShipping: z$1.boolean(),
-  currency: z$1.string(),
-  currencySymbol: z$1.string(),
-  pricesIncludeTax: z$1.boolean(),
-  taxDisplayMode: z$1.enum(["incl", "excl"]),
-  crossSells: z$1.array(z$1.number().positive()),
-  isEmpty: z$1.boolean(),
-  createdAt: z$1.date(),
-  updatedAt: z$1.date(),
-  expiresAt: z$1.date().optional(),
-  customerId: z$1.number().positive().optional(),
-  sessionId: z$1.string()
+  needsShipping: z.boolean(),
+  needsPayment: z.boolean(),
+  hasCalculatedShipping: z.boolean(),
+  currency: z.string(),
+  currencySymbol: z.string(),
+  pricesIncludeTax: z.boolean(),
+  taxDisplayMode: z.enum(["incl", "excl"]),
+  crossSells: z.array(z.number().positive()),
+  isEmpty: z.boolean(),
+  createdAt: z.date(),
+  updatedAt: z.date(),
+  expiresAt: z.date().optional(),
+  customerId: z.number().positive().optional(),
+  sessionId: z.string()
 });
-const CartAddItemRequestSchema = z$1.object({
-  productId: z$1.number().positive(),
-  variationId: z$1.number().positive().optional(),
-  quantity: z$1.number().positive(),
-  attributes: z$1.record(z$1.string()).optional(),
-  meta: z$1.array(CartItemMetaSchema).optional(),
-  replace: z$1.boolean().optional()
+const CartAddItemRequestSchema = z.object({
+  productId: z.number().positive(),
+  variationId: z.number().positive().optional(),
+  quantity: z.number().positive(),
+  attributes: z.record(z.string()).optional(),
+  meta: z.array(CartItemMetaSchema).optional(),
+  replace: z.boolean().optional()
 });
-z$1.object({
-  productId: z$1.number().positive(),
-  variationId: z$1.number().positive().optional(),
-  quantity: z$1.number().positive(),
-  attributes: z$1.record(z$1.string()).optional(),
-  meta: z$1.array(CartItemMetaSchema).optional()
+z.object({
+  productId: z.number().positive(),
+  variationId: z.number().positive().optional(),
+  quantity: z.number().positive(),
+  attributes: z.record(z.string()).optional(),
+  meta: z.array(CartItemMetaSchema).optional()
 });
 function isCart(obj) {
   try {
@@ -4499,63 +4499,63 @@ class CartService {
     this.authContext = null;
   }
 }
-const SearchFilterSchema = z$1.object({
-  field: z$1.string(),
-  operator: z$1.enum(["eq", "ne", "gt", "gte", "lt", "lte", "in", "nin", "contains", "startswith", "endswith", "between", "exists", "empty"]),
-  value: z$1.unknown(),
-  label: z$1.string().optional()
+const SearchFilterSchema = z.object({
+  field: z.string(),
+  operator: z.enum(["eq", "ne", "gt", "gte", "lt", "lte", "in", "nin", "contains", "startswith", "endswith", "between", "exists", "empty"]),
+  value: z.unknown(),
+  label: z.string().optional()
 });
-const RangeFilterSchema = z$1.object({
-  field: z$1.string(),
-  min: z$1.union([z$1.number(), z$1.string()]).optional(),
-  max: z$1.union([z$1.number(), z$1.string()]).optional(),
-  label: z$1.string().optional()
+const RangeFilterSchema = z.object({
+  field: z.string(),
+  min: z.union([z.number(), z.string()]).optional(),
+  max: z.union([z.number(), z.string()]).optional(),
+  label: z.string().optional()
 });
-const SearchSortSchema = z$1.object({
-  field: z$1.string(),
-  direction: z$1.enum(["asc", "desc"]),
-  label: z$1.string().optional()
+const SearchSortSchema = z.object({
+  field: z.string(),
+  direction: z.enum(["asc", "desc"]),
+  label: z.string().optional()
 });
-const SearchPaginationSchema = z$1.object({
-  page: z$1.number().min(1),
-  limit: z$1.number().min(1).max(100),
-  offset: z$1.number().min(0),
-  total: z$1.number().min(0),
-  totalPages: z$1.number().min(0)
+const SearchPaginationSchema = z.object({
+  page: z.number().min(1),
+  limit: z.number().min(1).max(100),
+  offset: z.number().min(0),
+  total: z.number().min(0),
+  totalPages: z.number().min(0)
 });
-const SearchQuerySchema = z$1.object({
-  text: z$1.string().optional(),
-  filters: z$1.array(SearchFilterSchema),
-  rangeFilters: z$1.array(RangeFilterSchema),
-  categoryIds: z$1.array(z$1.number().positive()).optional(),
-  tagIds: z$1.array(z$1.number().positive()).optional(),
-  productIds: z$1.array(z$1.number().positive()).optional(),
-  excludeProductIds: z$1.array(z$1.number().positive()).optional(),
-  inStock: z$1.boolean().optional(),
-  onSale: z$1.boolean().optional(),
-  featured: z$1.boolean().optional(),
-  minPrice: z$1.number().min(0).optional(),
-  maxPrice: z$1.number().min(0).optional(),
-  minRating: z$1.number().min(0).max(5).optional(),
-  attributes: z$1.record(z$1.union([z$1.string(), z$1.array(z$1.string())])).optional(),
-  sort: z$1.array(SearchSortSchema),
+const SearchQuerySchema = z.object({
+  text: z.string().optional(),
+  filters: z.array(SearchFilterSchema),
+  rangeFilters: z.array(RangeFilterSchema),
+  categoryIds: z.array(z.number().positive()).optional(),
+  tagIds: z.array(z.number().positive()).optional(),
+  productIds: z.array(z.number().positive()).optional(),
+  excludeProductIds: z.array(z.number().positive()).optional(),
+  inStock: z.boolean().optional(),
+  onSale: z.boolean().optional(),
+  featured: z.boolean().optional(),
+  minPrice: z.number().min(0).optional(),
+  maxPrice: z.number().min(0).optional(),
+  minRating: z.number().min(0).max(5).optional(),
+  attributes: z.record(z.union([z.string(), z.array(z.string())])).optional(),
+  sort: z.array(SearchSortSchema),
   pagination: SearchPaginationSchema,
-  operator: z$1.enum(["AND", "OR", "NOT"]),
-  fuzzy: z$1.boolean(),
-  highlight: z$1.boolean(),
-  facets: z$1.boolean(),
-  suggestions: z$1.boolean()
+  operator: z.enum(["AND", "OR", "NOT"]),
+  fuzzy: z.boolean(),
+  highlight: z.boolean(),
+  facets: z.boolean(),
+  suggestions: z.boolean()
 });
-z$1.object({
-  type: z$1.enum(["search", "filter", "sort", "paginate", "suggestion_click", "result_click"]),
-  query: z$1.string().optional(),
-  filters: z$1.array(SearchFilterSchema).optional(),
-  resultPosition: z$1.number().positive().optional(),
-  productId: z$1.number().positive().optional(),
-  timestamp: z$1.date(),
-  sessionId: z$1.string(),
-  userId: z$1.string().optional(),
-  metadata: z$1.record(z$1.unknown()).optional()
+z.object({
+  type: z.enum(["search", "filter", "sort", "paginate", "suggestion_click", "result_click"]),
+  query: z.string().optional(),
+  filters: z.array(SearchFilterSchema).optional(),
+  resultPosition: z.number().positive().optional(),
+  productId: z.number().positive().optional(),
+  timestamp: z.date(),
+  sessionId: z.string(),
+  userId: z.string().optional(),
+  metadata: z.record(z.unknown()).optional()
 });
 class SearchAnalyticsManager {
   constructor(config, cache) {
@@ -5253,86 +5253,86 @@ class SearchService {
     return suggestions.slice(0, this.config.suggestions.maxSuggestions);
   }
 }
-z$1.object({
-  type: z$1.enum(["billing", "shipping"]),
-  firstName: z$1.string().min(1),
-  lastName: z$1.string().min(1),
-  company: z$1.string().optional(),
-  address1: z$1.string().min(1),
-  address2: z$1.string().optional(),
-  city: z$1.string().min(1),
-  state: z$1.string().min(1),
-  postcode: z$1.string().min(1),
-  country: z$1.string().length(2),
+z.object({
+  type: z.enum(["billing", "shipping"]),
+  firstName: z.string().min(1),
+  lastName: z.string().min(1),
+  company: z.string().optional(),
+  address1: z.string().min(1),
+  address2: z.string().optional(),
+  city: z.string().min(1),
+  state: z.string().min(1),
+  postcode: z.string().min(1),
+  country: z.string().length(2),
   // ISO 3166-1 alpha-2
-  phone: z$1.string().optional(),
-  email: z$1.string().email().optional(),
-  isDefault: z$1.boolean()
+  phone: z.string().optional(),
+  email: z.string().email().optional(),
+  isDefault: z.boolean()
 });
-z$1.object({
-  language: z$1.string().length(2),
+z.object({
+  language: z.string().length(2),
   // ISO 639-1
-  currency: z$1.string().length(3),
+  currency: z.string().length(3),
   // ISO 4217
-  timezone: z$1.string(),
-  dateFormat: z$1.string(),
-  timeFormat: z$1.enum(["12h", "24h"]),
-  emailNotifications: z$1.object({
-    orderUpdates: z$1.boolean(),
-    promotions: z$1.boolean(),
-    newsletter: z$1.boolean(),
-    wishlistReminders: z$1.boolean(),
-    backInStock: z$1.boolean(),
-    priceDrops: z$1.boolean()
+  timezone: z.string(),
+  dateFormat: z.string(),
+  timeFormat: z.enum(["12h", "24h"]),
+  emailNotifications: z.object({
+    orderUpdates: z.boolean(),
+    promotions: z.boolean(),
+    newsletter: z.boolean(),
+    wishlistReminders: z.boolean(),
+    backInStock: z.boolean(),
+    priceDrops: z.boolean()
   }),
-  privacy: z$1.object({
-    profileVisibility: z$1.enum(["public", "private", "friends"]),
-    showPurchaseHistory: z$1.boolean(),
-    allowRecommendations: z$1.boolean(),
-    dataSharing: z$1.boolean()
+  privacy: z.object({
+    profileVisibility: z.enum(["public", "private", "friends"]),
+    showPurchaseHistory: z.boolean(),
+    allowRecommendations: z.boolean(),
+    dataSharing: z.boolean()
   })
 });
-z$1.object({
-  id: z$1.number().positive(),
-  wordpressUserId: z$1.number().positive(),
-  username: z$1.string().min(1),
-  email: z$1.string().email(),
-  firstName: z$1.string().min(1),
-  lastName: z$1.string().min(1),
-  displayName: z$1.string().min(1),
-  avatar: z$1.string().url().optional(),
-  bio: z$1.string().optional(),
-  website: z$1.string().url().optional(),
-  phone: z$1.string().optional(),
-  dateOfBirth: z$1.string().optional(),
-  gender: z$1.enum(["male", "female", "other", "prefer_not_to_say"]).optional(),
-  roles: z$1.array(z$1.enum(["customer", "shop_manager", "administrator", "editor", "author", "contributor", "subscriber"])),
-  status: z$1.enum(["active", "inactive", "pending", "suspended"]),
-  dateRegistered: z$1.string(),
-  lastLogin: z$1.string().optional(),
-  isEmailVerified: z$1.boolean(),
-  isPhoneVerified: z$1.boolean()
+z.object({
+  id: z.number().positive(),
+  wordpressUserId: z.number().positive(),
+  username: z.string().min(1),
+  email: z.string().email(),
+  firstName: z.string().min(1),
+  lastName: z.string().min(1),
+  displayName: z.string().min(1),
+  avatar: z.string().url().optional(),
+  bio: z.string().optional(),
+  website: z.string().url().optional(),
+  phone: z.string().optional(),
+  dateOfBirth: z.string().optional(),
+  gender: z.enum(["male", "female", "other", "prefer_not_to_say"]).optional(),
+  roles: z.array(z.enum(["customer", "shop_manager", "administrator", "editor", "author", "contributor", "subscriber"])),
+  status: z.enum(["active", "inactive", "pending", "suspended"]),
+  dateRegistered: z.string(),
+  lastLogin: z.string().optional(),
+  isEmailVerified: z.boolean(),
+  isPhoneVerified: z.boolean()
 });
-const UserSyncRequestSchema = z$1.object({
-  userId: z$1.number().positive(),
-  externalUserId: z$1.string().optional(),
-  syncProfile: z$1.boolean().optional(),
-  syncAddresses: z$1.boolean().optional(),
-  syncPreferences: z$1.boolean().optional(),
-  syncOrderHistory: z$1.boolean().optional(),
-  syncWishlist: z$1.boolean().optional(),
-  forceRefresh: z$1.boolean().optional()
+const UserSyncRequestSchema = z.object({
+  userId: z.number().positive(),
+  externalUserId: z.string().optional(),
+  syncProfile: z.boolean().optional(),
+  syncAddresses: z.boolean().optional(),
+  syncPreferences: z.boolean().optional(),
+  syncOrderHistory: z.boolean().optional(),
+  syncWishlist: z.boolean().optional(),
+  forceRefresh: z.boolean().optional()
 });
-const UserAuthContextSchema = z$1.object({
-  userId: z$1.number().positive(),
-  externalUserId: z$1.string().optional(),
-  email: z$1.string().email(),
-  isAuthenticated: z$1.boolean(),
-  accessToken: z$1.string().optional(),
-  refreshToken: z$1.string().optional(),
-  tokenExpiry: z$1.string().optional(),
-  permissions: z$1.array(z$1.string()).optional(),
-  sessionId: z$1.string().optional()
+const UserAuthContextSchema = z.object({
+  userId: z.number().positive(),
+  externalUserId: z.string().optional(),
+  email: z.string().email(),
+  isAuthenticated: z.boolean(),
+  accessToken: z.string().optional(),
+  refreshToken: z.string().optional(),
+  tokenExpiry: z.string().optional(),
+  permissions: z.array(z.string()).optional(),
+  sessionId: z.string().optional()
 });
 function isUserAuthContext(obj) {
   try {
@@ -7708,45 +7708,45 @@ class ReviewService {
     }
   }
 }
-const BaseAddressSchema = z$1.object({
-  firstName: z$1.string().min(1, "First name is required").max(100),
-  lastName: z$1.string().min(1, "Last name is required").max(100),
-  company: z$1.string().max(100).optional(),
-  address1: z$1.string().min(1, "Address is required").max(200),
-  address2: z$1.string().max(200).optional(),
-  city: z$1.string().min(1, "City is required").max(100),
-  state: z$1.string().min(1, "State is required").max(100),
-  postcode: z$1.string().min(1, "Postcode is required").max(20),
-  country: z$1.string().length(2, "Country must be 2-letter code"),
-  email: z$1.string().email().optional(),
-  phone: z$1.string().max(20).optional()
+const BaseAddressSchema = z.object({
+  firstName: z.string().min(1, "First name is required").max(100),
+  lastName: z.string().min(1, "Last name is required").max(100),
+  company: z.string().max(100).optional(),
+  address1: z.string().min(1, "Address is required").max(200),
+  address2: z.string().max(200).optional(),
+  city: z.string().min(1, "City is required").max(100),
+  state: z.string().min(1, "State is required").max(100),
+  postcode: z.string().min(1, "Postcode is required").max(20),
+  country: z.string().length(2, "Country must be 2-letter code"),
+  email: z.string().email().optional(),
+  phone: z.string().max(20).optional()
 });
 const BillingAddressSchema = BaseAddressSchema.extend({
-  email: z$1.string().email("Valid email is required")
+  email: z.string().email("Valid email is required")
 });
 const ShippingAddressSchema = BaseAddressSchema;
-z$1.object({
-  number: z$1.string().regex(/^\d{13,19}$/, "Invalid card number"),
-  expiryMonth: z$1.number().int().min(1).max(12),
-  expiryYear: z$1.number().int().min((/* @__PURE__ */ new Date()).getFullYear()),
-  cvv: z$1.string().regex(/^\d{3,4}$/, "Invalid CVV"),
-  holderName: z$1.string().min(1, "Cardholder name is required").max(100)
+z.object({
+  number: z.string().regex(/^\d{13,19}$/, "Invalid card number"),
+  expiryMonth: z.number().int().min(1).max(12),
+  expiryYear: z.number().int().min((/* @__PURE__ */ new Date()).getFullYear()),
+  cvv: z.string().regex(/^\d{3,4}$/, "Invalid CVV"),
+  holderName: z.string().min(1, "Cardholder name is required").max(100)
 });
-z$1.object({
-  subtotal: z$1.number().min(0),
-  tax: z$1.number().min(0),
-  shipping: z$1.number().min(0),
-  shippingTax: z$1.number().min(0),
-  discount: z$1.number().min(0),
-  fees: z$1.number().min(0),
-  feesTax: z$1.number().min(0),
-  total: z$1.number().min(0),
-  currency: z$1.string().length(3)
+z.object({
+  subtotal: z.number().min(0),
+  tax: z.number().min(0),
+  shipping: z.number().min(0),
+  shippingTax: z.number().min(0),
+  discount: z.number().min(0),
+  fees: z.number().min(0),
+  feesTax: z.number().min(0),
+  total: z.number().min(0),
+  currency: z.string().length(3)
 });
-z$1.object({
-  step: z$1.enum(["cart_review", "shipping_address", "billing_address", "shipping_method", "payment_method", "order_review", "payment_processing", "order_confirmation"]),
-  data: z$1.record(z$1.unknown()),
-  validate: z$1.boolean().optional()
+z.object({
+  step: z.enum(["cart_review", "shipping_address", "billing_address", "shipping_method", "payment_method", "order_review", "payment_processing", "order_confirmation"]),
+  data: z.record(z.unknown()),
+  validate: z.boolean().optional()
 });
 function validateBaseAddress(address) {
   const parsed = BaseAddressSchema.parse(address);
@@ -8812,7 +8812,14 @@ class PaymentService {
    */
   async clearPaymentCache() {
     try {
-      await this.cache.invalidatePattern("payment-");
+      const cacheKeys = [
+        "payment-methods",
+        "payment-status",
+        "payment-validation"
+      ];
+      for (const key of cacheKeys) {
+        await this.cache.delete(key);
+      }
       return Ok(void 0);
     } catch (error) {
       return Err(ErrorFactory.cacheError(

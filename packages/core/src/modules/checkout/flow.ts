@@ -11,6 +11,7 @@ import {
   CheckoutStepType,
   CheckoutSession,
   CheckoutValidationRules,
+  CheckoutFlow,
   OrderTotals,
   Order
 } from '../../types/checkout';
@@ -395,14 +396,14 @@ export class CheckoutFlowManager {
   /**
    * Validate current step
    */
-  async validateCurrentStep(cart: Cart): Promise<Result<CheckoutValidationResult, WooError>> {
+  async validateCurrentStep(cart: Cart): Promise<Result<FlowValidationResult, WooError>> {
     return this.validateStep(this.flowState.currentStep, cart);
   }
 
   /**
    * Validate specific step
    */
-  async validateStep(step: number, cart: Cart): Promise<Result<CheckoutValidationResult, WooError>> {
+  async validateStep(step: number, cart: Cart): Promise<Result<FlowValidationResult, WooError>> {
     try {
       const context: CheckoutValidationContext = {
         checkoutSession: this.flowState.session,
