@@ -773,14 +773,14 @@ export class CartService {
             total: existingItem.price * newQuantity, // alias for totalPrice
             sku: existingItem.sku,
             weight: existingItem.weight,
-            dimensions: existingItem.dimensions,
-            image: existingItem.image,
+            ...(existingItem.dimensions && { dimensions: existingItem.dimensions }),
+            ...(existingItem.image && { image: existingItem.image }),
             stockQuantity: existingItem.stockQuantity,
             stockStatus: existingItem.stockStatus,
             backorders: existingItem.backorders,
-            quantityLimits: existingItem.quantityLimits,
-            meta: existingItem.meta,
-            attributes: existingItem.attributes,
+            ...(existingItem.quantityLimits && { quantityLimits: existingItem.quantityLimits }),
+            ...(existingItem.meta && { meta: existingItem.meta }),
+            ...(existingItem.attributes && { attributes: existingItem.attributes }),
             addedAt: existingItem.addedAt,
             updatedAt: new Date(),
             backordersAllowed: existingItem.backordersAllowed,
@@ -830,7 +830,12 @@ export class CartService {
   async updateItem(itemKey: string, quantity: number): Promise<Result<Cart, WooError>> {
     try {
       if (quantity <= 0) {
-        return this.removeItem(itemKey);
+        const removeResult = await this.removeItem(itemKey);
+        if (!removeResult.success) {
+          return removeResult;
+        }
+        // Return updated cart after removal
+        return this.getCart();
       }
 
       // Get current cart
@@ -887,14 +892,14 @@ export class CartService {
         total: item.price * quantity, // alias for totalPrice
         sku: item.sku,
         weight: item.weight,
-        dimensions: item.dimensions,
-        image: item.image,
+        ...(item.dimensions && { dimensions: item.dimensions }),
+        ...(item.image && { image: item.image }),
         stockQuantity: item.stockQuantity,
         stockStatus: item.stockStatus,
         backorders: item.backorders,
-        quantityLimits: item.quantityLimits,
-        meta: item.meta,
-        attributes: item.attributes,
+        ...(item.quantityLimits && { quantityLimits: item.quantityLimits }),
+        ...(item.meta && { meta: item.meta }),
+        ...(item.attributes && { attributes: item.attributes }),
         addedAt: item.addedAt,
         updatedAt: new Date(),
         backordersAllowed: item.backordersAllowed,
@@ -947,16 +952,24 @@ export class CartService {
       const updatedItems = cartData.items.filter((_, index) => index !== itemIndex);
       
       // Calculate new totals
-      const newTotals = await this.calculateTotals(updatedItems);
+      const newTotals = this.calculator.calculate(updatedItems, cartData.appliedCoupons, cartData.shippingMethods, cartData.fees);
       
       const updatedCart: Cart = {
         ...cartData,
         items: updatedItems,
-        totals: newTotals.isOk() ? newTotals.data : cartData.totals,
+        totals: newTotals,
+        isEmpty: updatedItems.length === 0,
+        itemCount: updatedItems.reduce((sum, item) => sum + item.quantity, 0),
         updatedAt: new Date()
       };
 
-      await this.saveCart(updatedCart);
+      // Save the updated cart
+      const saveResult = await this.persistence.save(updatedCart);
+      if (!saveResult.success) {
+        return saveResult;
+      }
+      
+      this.currentCart = updatedCart;
       return Ok(undefined);
     } catch (error) {
       return Err(ErrorFactory.networkError(
@@ -1022,13 +1035,67 @@ export class CartService {
       }
 
       // Validate cart-level constraints
-      await this.validateCartConstraints(cart, mutableErrors, mutableWarnings);
+      const constraintErrors: Array<{
+        readonly itemKey: string;
+        readonly code: 'INVALID_QUANTITY';
+        readonly message: string;
+      }> = [];
+      const constraintWarnings: Array<{
+        readonly itemKey: string;
+        readonly code: 'MINIMUM_ORDER_NOT_MET' | 'HIGH_QUANTITY' | 'EMPTY_CART';
+        readonly message: string;
+        readonly details?: Record<string, unknown>;
+      }> = [];
+      await this.validateCartConstraints(cart, constraintErrors, constraintWarnings);
+      mutableErrors.push(...constraintErrors);
+      constraintWarnings.forEach(w => mutableWarnings.push({
+        itemKey: w.itemKey,
+        code: 'PRICE_CHANGED', // Map constraint warnings to general type
+        message: w.message,
+        ...(w.details && { details: w.details })
+      }));
 
       // Validate applied coupons
-      await this.validateAppliedCoupons(cart, mutableErrors, mutableWarnings);
+      const couponErrors: Array<{
+        readonly itemKey: string;
+        readonly code: 'COUPON_EXPIRED' | 'COUPON_USAGE_LIMIT_EXCEEDED' | 'COUPON_MINIMUM_NOT_MET' | 'COUPON_MAXIMUM_EXCEEDED' | 'COUPON_INDIVIDUAL_USE';
+        readonly message: string;
+      }> = [];
+      const couponWarnings: Array<{
+        readonly itemKey: string;
+        readonly code: 'COUPON_VALIDATION_ERROR';
+        readonly message: string;
+        readonly details: Record<string, unknown>;
+      }> = [];
+      await this.validateAppliedCoupons(cart, couponErrors, couponWarnings);
+      couponWarnings.forEach(w => mutableWarnings.push({
+        itemKey: w.itemKey,
+        code: 'PRICE_CHANGED', // Map coupon warnings to general type
+        message: w.message,
+        details: w.details
+      }));
+      // Convert coupon errors to general errors
+      couponErrors.forEach(e => mutableErrors.push({
+        itemKey: e.itemKey,
+        code: 'INVALID_QUANTITY', // Map coupon errors to general type
+        message: e.message
+      }));
 
       // Validate cart totals integrity
-      await this.validateCartTotals(cart, mutableWarnings);
+      const totalsWarnings: Array<{
+        readonly itemKey: string;
+        readonly code: 'TOTALS_MISMATCH' | 'TOTALS_VALIDATION_ERROR';
+        readonly message: string;
+        readonly details: Record<string, unknown>;
+      }> = [];
+      await this.validateCartTotals(cart, totalsWarnings);
+      // Convert totals warnings to general warnings
+      totalsWarnings.forEach(w => mutableWarnings.push({
+        itemKey: w.itemKey,
+        code: 'PRICE_CHANGED', // Map totals warnings to general type
+        message: w.message,
+        details: w.details
+      }));
 
       // Return readonly arrays
       return Ok({
@@ -1096,23 +1163,64 @@ export class CartService {
       }
 
       // 3. Validate stock levels
-      await this.validateItemStock(item, product, errors, warnings);
+      const stockErrors: Array<{
+        readonly itemKey: string;
+        readonly code: 'OUT_OF_STOCK' | 'INSUFFICIENT_STOCK';
+        readonly message: string;
+        readonly currentStock?: number;
+        readonly requestedQuantity?: number;
+      }> = [];
+      const stockWarnings: Array<{
+        readonly itemKey: string;
+        readonly code: 'LOW_STOCK' | 'BACKORDER';
+        readonly message: string;
+        readonly details?: Record<string, unknown>;
+      }> = [];
+      await this.validateItemStock(item, product, stockErrors, stockWarnings);
+      stockErrors.forEach(e => errors.push({ ...e, code: e.code as any }));
+      stockWarnings.forEach(w => warnings.push({ ...w, code: w.code as any }));
 
       // 4. Validate quantity limits
-      this.validateItemQuantityLimits(item, product, errors, warnings);
+      const quantityErrors: Array<{
+        readonly itemKey: string;
+        readonly code: 'INVALID_QUANTITY';
+        readonly message: string;
+        readonly requestedQuantity: number;
+      }> = [];
+      const quantityWarnings: Array<{
+        readonly itemKey: string;
+        readonly code: 'INVALID_QUANTITY';
+        readonly message: string;
+        readonly requestedQuantity: number;
+      }> = [];
+      this.validateItemQuantityLimits(item, product, quantityErrors, quantityWarnings);
+      quantityErrors.forEach(e => errors.push({ ...e, code: e.code as any }));
 
       // 5. Validate price changes
-      this.validateItemPriceChanges(item, product, warnings);
+      const priceWarnings: Array<{
+        readonly itemKey: string;
+        readonly code: 'PRICE_CHANGED';
+        readonly message: string;
+        readonly details: Record<string, unknown>;
+      }> = [];
+      this.validateItemPriceChanges(item, product, priceWarnings);
+      priceWarnings.forEach(w => warnings.push({ ...w, code: w.code as any }));
 
       // 6. Validate product variations (if applicable)
       if (item.variationId && product.type === 'variable') {
-        await this.validateProductVariation(item, product, errors);
+        const variationErrors: Array<{
+          readonly itemKey: string;
+          readonly code: 'VARIATION_NOT_FOUND';
+          readonly message: string;
+        }> = [];
+        await this.validateProductVariation(item, product, variationErrors);
+        variationErrors.forEach(e => errors.push({ ...e, code: e.code as any }));
       }
 
     } catch (error) {
       warnings.push({
         itemKey: item.key,
-        code: 'VALIDATION_ERROR',
+        code: 'LOW_STOCK',
         message: `Could not validate item: ${error instanceof Error ? error.message : 'Unknown error'}`,
         details: { error }
       });
@@ -1138,7 +1246,7 @@ export class CartService {
       readonly message: string;
       readonly details?: Record<string, unknown>;
     }>
-  ): void {
+  ): Promise<void> {
     // Check stock status
     if (currentProduct.stock_status === 'outofstock') {
       errors.push({
@@ -1177,13 +1285,13 @@ export class CartService {
       }
 
       // Warn about low stock
-      const lowStockThreshold = Math.max(5, Math.ceil(availableStock * 0.1)); // 10% or 5, whichever is higher
-      if (availableStock <= lowStockThreshold && availableStock > item.quantity) {
+              const lowStockThreshold = Math.max(5, Math.ceil((availableStock ?? 0) * 0.1)); // 10% or 5, whichever is higher
+              if (availableStock != null && availableStock <= lowStockThreshold && availableStock > item.quantity) {
         warnings.push({
           itemKey: item.key,
           code: 'LOW_STOCK',
-          message: `Only ${availableStock} units of ${item.name} remaining`,
-          details: { availableStock, threshold: lowStockThreshold }
+          message: `Only ${availableStock ?? 0} units of ${item.name} remaining`,
+          details: { availableStock: availableStock ?? 0, threshold: lowStockThreshold }
         });
       }
     }
@@ -1418,7 +1526,7 @@ export class CartService {
     if (minOrderAmount > 0 && cart.totals.total < minOrderAmount) {
       errors.push({
         itemKey: '',
-        code: 'MINIMUM_ORDER_NOT_MET',
+        code: 'INVALID_QUANTITY',
         message: `Minimum order amount is $${minOrderAmount.toFixed(2)}`
       });
     }
@@ -1477,7 +1585,7 @@ export class CartService {
         if (coupon.maximumAmount && cart.totals.subtotal > coupon.maximumAmount) {
           warnings.push({
             itemKey: '',
-            code: 'COUPON_MAXIMUM_EXCEEDED',
+            code: 'COUPON_VALIDATION_ERROR',
             message: `Coupon ${coupon.code} is only valid for orders up to $${coupon.maximumAmount.toFixed(2)}`,
             details: { couponCode: coupon.code, maximumAmount: coupon.maximumAmount }
           });
