@@ -65,7 +65,7 @@ class UserCacheManager {
   /**
    * Get cached user profile
    */
-  async getUserProfile(userId: number): Promise<Result<UserProfile | null, WooError>> {
+  async getUserProfile(_userId: number): Promise<Result<UserProfile | null, WooError>> {
     if (!this.config.cacheUserData) {
       return Ok(null);
     }
@@ -105,7 +105,7 @@ class UserCacheManager {
   /**
    * Clear user cache
    */
-  async clearUserCache(userId: number): Promise<Result<void, WooError>> {
+  async clearUserCache(_userId: number): Promise<Result<void, WooError>> {
     try {
       const keys = [
         `user-profile:${userId}`,
@@ -423,7 +423,7 @@ export class UserService {
   /**
    * Get user profile by ID
    */
-  async getUserProfile(userId: number, useCache: boolean = true): Promise<Result<UserProfile, WooError>> {
+  async getUserProfile(_userId: number, useCache: boolean = true): Promise<Result<UserProfile, WooError>> {
     try {
       // Check cache first
       if (useCache) {
@@ -478,7 +478,7 @@ export class UserService {
   /**
    * Update user profile
    */
-  async updateUserProfile(userId: number, updates: UserUpdateRequest): Promise<Result<UserProfile, WooError>> {
+  async updateUserProfile(_userId: number, updates: UserUpdateRequest): Promise<Result<UserProfile, WooError>> {
     try {
       const updateData: any = {};
 
@@ -576,14 +576,14 @@ export class UserService {
   /**
    * Get email verification status
    */
-  async getEmailVerificationStatus(userId: number): Promise<Result<EmailVerificationStatus, WooError>> {
+  async getEmailVerificationStatus(_userId: number): Promise<Result<EmailVerificationStatus, WooError>> {
     return this.emailVerification.getVerificationStatus(userId);
   }
 
   /**
    * Resend email verification
    */
-  async resendEmailVerification(userId: number): Promise<Result<EmailVerificationResponse, WooError>> {
+  async resendEmailVerification(_userId: number): Promise<Result<EmailVerificationResponse, WooError>> {
     return this.emailVerification.resendVerification(userId);
   }
 
@@ -632,7 +632,7 @@ export class UserService {
    * Get user order history
    */
   async getUserOrderHistory(
-    userId: number, 
+    _userId: number, 
     page: number = 1, 
     limit: number = 10
   ): Promise<Result<UserOrderSummary[], WooError>> {
@@ -710,7 +710,7 @@ export class UserService {
     }
   }
 
-  private async syncUserProfile(userId: number): Promise<Result<{ profile: UserProfile; customerData?: CustomerData }, WooError>> {
+  private async syncUserProfile(_userId: number): Promise<Result<{ profile: UserProfile; customerData?: CustomerData }, WooError>> {
     const profileResult = await this.getUserProfile(userId, false);
     if (!profileResult.success) {
       return profileResult;
@@ -728,7 +728,7 @@ export class UserService {
     return Ok({ profile, customerData });
   }
 
-  private async syncUserAddresses(userId: number): Promise<Result<UserAddress[], WooError>> {
+  private async syncUserAddresses(_userId: number): Promise<Result<UserAddress[], WooError>> {
     // This would typically fetch addresses from WooCommerce customer data
     const customerResult = await this.getCustomerData(userId);
     if (!customerResult.success) {
@@ -748,7 +748,7 @@ export class UserService {
     return Ok(addresses);
   }
 
-  private async syncUserPreferences(userId: number): Promise<Result<UserPreferences, WooError>> {
+  private async syncUserPreferences(_userId: number): Promise<Result<UserPreferences, WooError>> {
     // Default preferences - could be enhanced to fetch from user meta
     const preferences: UserPreferences = {
       language: 'en',
@@ -775,11 +775,11 @@ export class UserService {
     return Ok(preferences);
   }
 
-  private async syncUserOrderHistory(userId: number): Promise<Result<UserOrderSummary[], WooError>> {
+  private async syncUserOrderHistory(_userId: number): Promise<Result<UserOrderSummary[], WooError>> {
     return this.getUserOrderHistory(userId, 1, this.config.maxOrderHistory);
   }
 
-  private async syncUserWishlist(userId: number): Promise<Result<UserWishlist, WooError>> {
+  private async syncUserWishlist(_userId: number): Promise<Result<UserWishlist, WooError>> {
     // Placeholder implementation - would need a wishlist plugin or custom implementation
     const wishlist: UserWishlist = {
       id: `wishlist-${userId}`,

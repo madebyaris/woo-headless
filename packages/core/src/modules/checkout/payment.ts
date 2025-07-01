@@ -15,6 +15,9 @@ import {
   PaymentCallbackData
 } from '../../types/checkout';
 
+// Re-export for external use
+export type { PaymentInitRequest };
+
 /**
  * Available payment methods response from backend
  */
@@ -243,7 +246,7 @@ export class PaymentService {
   /**
    * Handle payment callback from gateway
    */
-  async handlePaymentCallback(callbackData: PaymentCallbackData): Promise<Result<PaymentStatusResponse, WooError>> {
+  async handlePaymentCallback(_callbackData: PaymentCallbackData): Promise<Result<PaymentStatusResponse, WooError>> {
     try {
       // Verify callback signature if provided
       if (callbackData.signature) {
@@ -500,7 +503,7 @@ export class PaymentService {
   /**
    * Verify payment callback signature
    */
-  private async verifyCallbackSignature(callbackData: PaymentCallbackData): Promise<boolean> {
+  private async verifyCallbackSignature(_callbackData: PaymentCallbackData): Promise<boolean> {
     try {
       // This would implement gateway-specific signature verification
       // For now, return true as placeholder

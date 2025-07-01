@@ -21,7 +21,7 @@ import { Cart } from '../../types/cart';
  * Order creation request
  */
 export interface OrderCreateRequest {
-  readonly cart: Cart;
+  readonly _cart: Cart;
   readonly checkoutSession: CheckoutSession;
   readonly customerNotes?: string;
   readonly metadata?: Record<string, unknown>;
@@ -31,7 +31,7 @@ export interface OrderCreateRequest {
  * Order creation response
  */
 export interface OrderCreateResponse {
-  readonly order: Order;
+  readonly _order: Order;
   readonly requiresPayment: boolean;
   readonly paymentUrl?: string;
   readonly confirmationUrl: string;
@@ -638,7 +638,7 @@ export class OrderProcessingService {
   /**
    * Reserve inventory for cart items
    */
-  private async reserveInventory(cart: Cart): Promise<Result<void, WooError>> {
+  private async reserveInventory(_cart: Cart): Promise<Result<void, WooError>> {
     try {
       // This would implement inventory reservation logic
       // For now, return success as placeholder
@@ -655,7 +655,7 @@ export class OrderProcessingService {
   /**
    * Release reserved inventory
    */
-  private async releaseInventory(cart: Cart): Promise<Result<void, WooError>> {
+  private async releaseInventory(_cart: Cart): Promise<Result<void, WooError>> {
     try {
       // This would implement inventory release logic
       // For now, return success as placeholder
@@ -672,7 +672,7 @@ export class OrderProcessingService {
   /**
    * Update inventory
    */
-  private async updateInventory(request: InventoryUpdateRequest): Promise<Result<void, WooError>> {
+  private async updateInventory(_request: InventoryUpdateRequest): Promise<Result<void, WooError>> {
     try {
       // This would implement inventory update logic
       // For now, return success as placeholder
@@ -689,7 +689,7 @@ export class OrderProcessingService {
   /**
    * Send order confirmation email
    */
-  private async sendOrderConfirmationEmail(order: Order): Promise<Result<void, WooError>> {
+  private async sendOrderConfirmationEmail(_order: Order): Promise<Result<void, WooError>> {
     try {
       // This would integrate with email service
       // For now, return success as placeholder

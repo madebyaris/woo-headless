@@ -685,6 +685,24 @@ export interface PaymentInitRequest {
 }
 
 /**
+ * Step transition result with all needed properties
+ */
+export interface StepTransitionResult {
+  readonly success: boolean;
+  readonly newStep: number;
+  readonly previousStep: number;
+  readonly validationResult?: any; // FlowValidationResult from validation module
+  readonly errors: readonly any[];
+  readonly blockers: readonly any[];
+  readonly orderId?: string;
+  readonly redirectUrl?: string;
+  readonly paymentStatus?: string;
+  readonly requiresRedirect?: any;
+  readonly clientSecret?: any;
+  readonly paymentIntentId?: any;
+}
+
+/**
  * Payment status request
  */
 export interface PaymentStatusRequest {
@@ -711,4 +729,16 @@ export interface CheckoutValidationResult {
   readonly isValid: boolean;
   readonly errors: readonly CheckoutError[];
   readonly warnings: readonly CheckoutError[];
+}
+
+/**
+ * Checkout validation context interface
+ */
+export interface CheckoutValidationContext {
+  readonly checkoutSession: CheckoutSession;
+  readonly cart: any; // Using any to avoid circular imports
+  readonly validationRules: CheckoutValidationRules;
+  readonly isGuestCheckout: boolean;
+  readonly currentStep: number;
+  readonly skipOptionalValidations?: boolean;
 }

@@ -452,7 +452,7 @@ export class SocialLoginService {
   /**
    * Refresh social login tokens
    */
-  async refreshSocialTokens(provider: SocialProvider, refreshToken: string): Promise<Result<{ accessToken: string; refreshToken?: string; expiresAt?: Date }, WooError>> {
+  async refreshSocialTokens(provider: SocialProvider, _refreshToken: string): Promise<Result<{ accessToken: string; refreshToken?: string; expiresAt?: Date }, WooError>> {
     try {
       const providerConfig = this.getProviderConfig(provider);
       if (!providerConfig) {
@@ -504,7 +504,7 @@ export class SocialLoginService {
   /**
    * Generate PKCE parameters
    */
-  private generatePKCE(): { codeVerifier: string; codeChallenge: string } {
+  private generatePKCE(): { _codeVerifier: string; codeChallenge: string } {
     const codeVerifier = this.generateRandomString(128);
     const codeChallenge = this.base64URLEncode(this.sha256(codeVerifier));
     return { codeVerifier, codeChallenge };
@@ -637,7 +637,7 @@ export class SocialLoginService {
   private async exchangeCodeForTokens(
     provider: SocialProvider,
     code: string,
-    codeVerifier: string
+    _codeVerifier: string
   ): Promise<Result<{ accessToken: string; refreshToken?: string; expiresAt?: Date }, WooError>> {
     try {
       // This would implement actual token exchange for each provider

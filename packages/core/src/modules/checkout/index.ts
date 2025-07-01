@@ -42,11 +42,11 @@ import {
 } from './payment';
 import { 
   CheckoutValidationService,
-  CheckoutValidationContext,
   CheckoutValidationResult,
   ValidationResult,
   createValidationRules 
 } from './validation';
+import { CheckoutValidationContext } from '../../types/checkout';
 import { 
   CheckoutFlowManager,
   CheckoutFlowState,

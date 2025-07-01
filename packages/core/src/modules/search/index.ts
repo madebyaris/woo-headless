@@ -505,7 +505,7 @@ export class SearchService {
   /**
    * Advanced search with full query object
    */
-  async search(query: SearchQuery): Promise<Result<SearchResults, WooError>> {
+  async search(_query: SearchQuery): Promise<Result<SearchResults, WooError>> {
     const startTime = performance.now();
 
     try {
@@ -703,7 +703,7 @@ export class SearchService {
 
   // Private helper methods
 
-  private validateSearchQuery(query: SearchQuery): Result<void, WooError> {
+  private validateSearchQuery(_query: SearchQuery): Result<void, WooError> {
     try {
       SearchQuerySchema.parse(query);
       return Ok(undefined);
@@ -715,7 +715,7 @@ export class SearchService {
     }
   }
 
-  private generateCacheKey(query: SearchQuery): string {
+  private generateCacheKey(_query: SearchQuery): string {
     const keyData = {
       text: query.text,
       filters: query.filters,
@@ -748,7 +748,7 @@ export class SearchService {
     return fuseResult.matches.map(match => match.key || '').filter(Boolean);
   }
 
-  private applyFilters(results: SearchResultItem[], query: SearchQuery): SearchResultItem[] {
+  private applyFilters(_results: SearchResultItem[], _query: SearchQuery): SearchResultItem[] {
     let filteredResults = [...results];
 
     // Apply basic filters
@@ -799,17 +799,17 @@ export class SearchService {
     return filteredResults;
   }
 
-  private applyCustomFilter(results: SearchResultItem[], filter: SearchFilter): SearchResultItem[] {
+  private applyCustomFilter(_results: SearchResultItem[], _filter: SearchFilter): SearchResultItem[] {
     // TODO: Implement custom filter logic based on filter.field and filter.operator
     return results;
   }
 
-  private applyRangeFilter(results: SearchResultItem[], filter: RangeFilter): SearchResultItem[] {
+  private applyRangeFilter(_results: SearchResultItem[], filter: RangeFilter): SearchResultItem[] {
     // TODO: Implement range filter logic
     return results;
   }
 
-  private applySorting(results: SearchResultItem[], sorts: readonly { field: string; direction: SortDirection }[]): SearchResultItem[] {
+  private applySorting(_results: SearchResultItem[], sorts: readonly { field: string; direction: SortDirection }[]): SearchResultItem[] {
     if (sorts.length === 0) {
       // Default sort by relevance score
       return results.sort((a, b) => b.score - a.score);
@@ -854,7 +854,7 @@ export class SearchService {
   }
 
   private applyPagination(
-    results: SearchResultItem[], 
+    _results: SearchResultItem[], 
     pagination: SearchPagination
   ): { paginatedResults: SearchResultItem[]; pagination: SearchPagination } {
     const total = results.length;
@@ -873,7 +873,7 @@ export class SearchService {
     };
   }
 
-  private generateFacets(results: SearchResultItem[], query: SearchQuery): SearchFacet[] {
+  private generateFacets(_results: SearchResultItem[], _query: SearchQuery): SearchFacet[] {
     const facets: SearchFacet[] = [];
 
     // TODO: Generate facets based on product attributes, categories, etc.
@@ -882,7 +882,7 @@ export class SearchService {
     return facets;
   }
 
-  private generateAggregations(results: SearchResultItem[], query: SearchQuery): SearchAggregation[] {
+  private generateAggregations(_results: SearchResultItem[], _query: SearchQuery): SearchAggregation[] {
     const aggregations: SearchAggregation[] = [];
 
     // Price range aggregation

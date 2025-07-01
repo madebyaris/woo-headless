@@ -12,7 +12,7 @@ import {
   ProductVariation,
   ProductSchema
 } from '../../types/commerce';
-import { PaginationConfig, SortConfig, Filter } from '../../types/config';
+// import { PaginationConfig, SortConfig, Filter } from '../../types/config'; // Unused imports
 
 /**
  * Product list parameters

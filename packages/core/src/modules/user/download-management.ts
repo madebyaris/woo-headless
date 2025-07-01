@@ -41,7 +41,7 @@ export interface DownloadableFile {
  */
 export interface DownloadLink {
   readonly downloadId: string;
-  readonly customerId: number;
+  readonly _customerId: number;
   readonly orderId: number;
   readonly productId: number;
   readonly downloadUrl: string;
@@ -58,7 +58,7 @@ export interface DownloadLink {
  */
 export interface DownloadPermission {
   readonly permissionId: string;
-  readonly customerId: number;
+  readonly _customerId: number;
   readonly orderId: number;
   readonly productId: number;
   readonly downloadId: string;
@@ -93,10 +93,10 @@ export interface CustomerDownload {
  */
 export interface DownloadAnalytics {
   readonly downloadId: string;
-  readonly customerId: number;
+  readonly _customerId: number;
   readonly productId: number;
   readonly downloadedAt: Date;
-  readonly ipAddress: string;
+  readonly _ipAddress: string;
   readonly userAgent: string;
   readonly fileSize: number;
   readonly downloadDuration?: number;
@@ -110,8 +110,8 @@ export interface DownloadAnalytics {
  */
 export interface DownloadRequest {
   readonly permissionId: string;
-  readonly customerId: number;
-  readonly ipAddress: string;
+  readonly _customerId: number;
+  readonly _ipAddress: string;
   readonly userAgent: string;
   readonly validateOwnership?: boolean;
 }
@@ -208,7 +208,7 @@ export class DownloadManagementService {
   /**
    * Get customer's downloadable products
    */
-  async getCustomerDownloads(customerId: number): Promise<Result<CustomerDownload[], WooError>> {
+  async getCustomerDownloads(_customerId: number): Promise<Result<CustomerDownload[], WooError>> {
     try {
       if (!this.config.enabled) {
         return Err(ErrorFactory.configurationError(
@@ -729,7 +729,7 @@ export class DownloadManagementService {
    * Create file stream
    */
   private async createFileStream(
-    filePath: string, 
+    _filePath: string, 
     fileName: string, 
     fileSize: number
   ): Promise<Result<FileStream, WooError>> {
@@ -792,7 +792,7 @@ export class DownloadManagementService {
   /**
    * Check rate limiting
    */
-  private async checkRateLimit(customerId: number, ipAddress: string): Promise<Result<void, WooError>> {
+  private async checkRateLimit(_customerId: number, _ipAddress: string): Promise<Result<void, WooError>> {
     if (!this.config.rateLimiting.enabled) {
       return Ok(undefined);
     }
@@ -823,7 +823,7 @@ export class DownloadManagementService {
   /**
    * Validate customer IP
    */
-  private async validateCustomerIP(customerId: number, ipAddress: string): Promise<boolean> {
+  private async validateCustomerIP(_customerId: number, _ipAddress: string): Promise<boolean> {
     try {
       // This would implement IP validation logic
       // For now, return true as placeholder

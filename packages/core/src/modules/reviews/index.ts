@@ -117,7 +117,7 @@ export class ReviewService {
   /**
    * Get a single review by ID
    */
-  async get(reviewId: number): Promise<Result<ProductReview, WooError>> {
+  async get(_reviewId: number): Promise<Result<ProductReview, WooError>> {
     try {
       if (!reviewId || reviewId <= 0) {
         return Err(ErrorFactory.validationError('Invalid review ID'));
@@ -238,7 +238,7 @@ export class ReviewService {
   /**
    * Update an existing review
    */
-  async update(reviewId: number, updateData: UpdateReviewRequest): Promise<Result<ProductReview, WooError>> {
+  async update(_reviewId: number, updateData: UpdateReviewRequest): Promise<Result<ProductReview, WooError>> {
     try {
       if (!reviewId || reviewId <= 0) {
         return Err(ErrorFactory.validationError('Invalid review ID'));
@@ -299,7 +299,7 @@ export class ReviewService {
   /**
    * Delete a review
    */
-  async delete(reviewId: number, force = false): Promise<Result<boolean, WooError>> {
+  async delete(_reviewId: number, force = false): Promise<Result<boolean, WooError>> {
     try {
       if (!reviewId || reviewId <= 0) {
         return Err(ErrorFactory.validationError('Invalid review ID'));
@@ -335,14 +335,14 @@ export class ReviewService {
   /**
    * Get reviews for a specific product with analytics
    */
-  async getProductReviews(productId: number, params: Omit<ReviewListParams, 'product'> = {}): Promise<Result<ReviewListResponse, WooError>> {
+  async getProductReviews(_productId: number, params: Omit<ReviewListParams, 'product'> = {}): Promise<Result<ReviewListResponse, WooError>> {
     return this.list({ ...params, product: productId });
   }
 
   /**
    * Get review analytics for a product
    */
-  async getAnalytics(productId: number, period = '30d'): Promise<Result<ReviewAnalytics, WooError>> {
+  async getAnalytics(_productId: number, period = '30d'): Promise<Result<ReviewAnalytics, WooError>> {
     try {
       if (!productId || productId <= 0) {
         return Err(ErrorFactory.validationError('Invalid product ID'));
@@ -406,7 +406,7 @@ export class ReviewService {
   /**
    * Vote on review helpfulness
    */
-  async voteHelpful(reviewId: number, voteType: 'helpful' | 'not_helpful', userEmail?: string): Promise<Result<ReviewVote, WooError>> {
+  async voteHelpful(_reviewId: number, voteType: 'helpful' | 'not_helpful', userEmail?: string): Promise<Result<ReviewVote, WooError>> {
     try {
       if (!reviewId || reviewId <= 0) {
         return Err(ErrorFactory.validationError('Invalid review ID'));
@@ -450,7 +450,7 @@ export class ReviewService {
   /**
    * Moderate a review (approve, hold, spam, trash)
    */
-  async moderate(reviewId: number, action: ReviewStatus, reason?: string): Promise<Result<ReviewModeration, WooError>> {
+  async moderate(_reviewId: number, action: ReviewStatus, reason?: string): Promise<Result<ReviewModeration, WooError>> {
     try {
       if (!reviewId || reviewId <= 0) {
         return Err(ErrorFactory.validationError('Invalid review ID'));
@@ -588,7 +588,7 @@ export class ReviewService {
     return queryParams;
   }
 
-  private calculateRatingDistribution(reviews: readonly ProductReview[]): RatingDistribution {
+  private calculateRatingDistribution(_reviews: readonly ProductReview[]): RatingDistribution {
     const distribution = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
     
     for (const review of reviews) {
@@ -652,7 +652,7 @@ export class ReviewService {
     };
   }
 
-  private async checkRateLimit(userEmail: string): Promise<Result<void, WooError>> {
+  private async checkRateLimit(_userEmail: string): Promise<Result<void, WooError>> {
     const now = Date.now();
     const userKey = userEmail.toLowerCase();
     const userLimit = this.rateLimitStore.get(userKey);
@@ -681,7 +681,7 @@ export class ReviewService {
     return Ok(undefined);
   }
 
-  private updateRateLimit(userEmail: string): void {
+  private updateRateLimit(_userEmail: string): void {
     const userKey = userEmail.toLowerCase();
     const userLimit = this.rateLimitStore.get(userKey);
     
@@ -734,21 +734,21 @@ export class ReviewService {
     return profanityWords.some(word => lowerContent.includes(word));
   }
 
-  private async processReviewImages(images: readonly (File | string)[]): Promise<Result<ReviewImage[], WooError>> {
+  private async processReviewImages(_images: readonly (File | string)[]): Promise<Result<ReviewImage[], WooError>> {
     // Image processing implementation would go here
     // For now, return empty array
     return Ok([]);
   }
 
-  private async attachImagesToReview(reviewId: number, images: ReviewImage[]): Promise<void> {
+  private async attachImagesToReview(_reviewId: number, _images: ReviewImage[]): Promise<void> {
     // Implementation for attaching images to review
   }
 
-  private async updateReviewImages(reviewId: number, images: ReviewImage[]): Promise<void> {
+  private async updateReviewImages(_reviewId: number, _images: ReviewImage[]): Promise<void> {
     // Implementation for updating review images
   }
 
-  private async invalidateReviewCaches(productId: number): Promise<void> {
+  private async invalidateReviewCaches(_productId: number): Promise<void> {
     // Invalidate all review-related caches for a product
     const cacheKeys = [
       `reviews:list:*${productId}*`,
@@ -765,17 +765,17 @@ export class ReviewService {
     console.log(`Review event: ${event}`, data);
   }
 
-  private async getUserVote(reviewId: number, userEmail: string): Promise<ReviewVote | null> {
+  private async getUserVote(_reviewId: number, _userEmail: string): Promise<ReviewVote | null> {
     // Check if user has already voted - implementation would query database
     return null;
   }
 
-  private async getPreviousPeriodData(productId: number, period: string): Promise<{ averageRating: number } | null> {
+  private async getPreviousPeriodData(_productId: number, _period: string): Promise<{ averageRating: number } | null> {
     // Get previous period data for trend analysis
     return null;
   }
 
-  private async extractTopKeywords(reviews: readonly ProductReview[]): Promise<Array<{keyword: string; count: number; sentiment: 'positive' | 'negative' | 'neutral'}>> {
+  private async extractTopKeywords(_reviews: readonly ProductReview[]): Promise<Array<{keyword: string; count: number; sentiment: 'positive' | 'negative' | 'neutral'}>> {
     // Extract and analyze keywords from reviews
     // This would use NLP libraries in production
     return [];

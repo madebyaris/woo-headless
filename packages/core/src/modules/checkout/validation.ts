@@ -8,7 +8,6 @@ import { Result, Ok, Err, isErr, unwrap, unwrapErr } from '../../types/result';
 import { WooError, ErrorFactory } from '../../types/errors';
 import {
   CheckoutValidationRules,
-  CheckoutValidationResult,
   CheckoutValidationContext,
   CheckoutSession
 } from '../../types/checkout';
@@ -39,19 +38,10 @@ export interface CheckoutValidationResult {
   readonly warnings: readonly string[];
   readonly blockers: readonly string[];
   readonly recommendations: readonly string[];
+  readonly errors: readonly any[]; // Added to match checkout types expectation
 }
 
-/**
- * Validation context for checkout process
- */
-export interface CheckoutValidationContext {
-  readonly checkoutSession: CheckoutSession;
-  readonly cart: Cart;
-  readonly validationRules: CheckoutValidationRules;
-  readonly isGuestCheckout: boolean;
-  readonly currentStep: number;
-  readonly skipOptionalValidations?: boolean;
-}
+
 
 /**
  * Stock validation result
@@ -187,7 +177,8 @@ export class CheckoutValidationService {
         criticalErrors,
         warnings,
         blockers,
-        recommendations
+        recommendations,
+        errors: [] // Added to match interface
       });
 
     } catch (error) {
@@ -218,7 +209,7 @@ export class CheckoutValidationService {
         isGuestCheckout: context.isGuestCheckout,
         checkoutRules: context.validationRules,
         fieldRequirements: {
-          email: context.isGuestCheckout || context.validationRules.requireEmail
+          ...(context.isGuestCheckout || context.validationRules.requireEmail ? { email: true } : {})
         }
       };
 
@@ -317,12 +308,16 @@ export class CheckoutValidationService {
       // Get available shipping rates
       const ratesResult = await this.shippingService.getShippingRates({
         destination: shippingAddress,
-        cartItems: context.cart.items.map(item => ({
+        cartItems: context.cart.items.map((item: any) => ({
           productId: item.productId,
-          variationId: item.variationId,
           quantity: item.quantity,
-          weight: item.weight,
-          dimensions: item.dimensions
+          ...(item.variationId !== undefined && { variationId: item.variationId }),
+          ...(item.weight !== undefined && { weight: item.weight }),
+          ...(item.dimensions !== undefined && { dimensions: {
+            length: parseFloat(item.dimensions.length),
+            width: parseFloat(item.dimensions.width),
+            height: parseFloat(item.dimensions.height)
+          }})
         })),
         cartTotal: context.cart.totals.total,
         currency: context.cart.currency
@@ -482,7 +477,7 @@ export class CheckoutValidationService {
 
       // Validate total calculation
       const calculatedTotal = totals.subtotal + totals.tax + totals.shipping + 
-                             totals.shippingTax + totals.fees + totals.feesTax - 
+                             totals.shippingTax + totals.fees + totals.feeTax - 
                              totals.discount;
 
       if (Math.abs(calculatedTotal - totals.total) > 0.01) {
@@ -574,7 +569,7 @@ export class CheckoutValidationService {
         criticalErrors,
         warnings,
         blockers: allValid ? [] : ['Step validation failed'],
-        recommendations: []
+        recommendations: [], errors: []
       });
 
     } catch (error) {

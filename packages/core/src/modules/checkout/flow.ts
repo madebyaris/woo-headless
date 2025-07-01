@@ -19,7 +19,8 @@ import { Cart } from '../../types/cart';
 import { AddressManager } from './address';
 import { ShippingService } from './shipping';
 import { PaymentService } from './payment';
-import { CheckoutValidationService, CheckoutValidationContext, CheckoutValidationResult as FlowValidationResult } from './validation';
+import { CheckoutValidationService, CheckoutValidationResult as FlowValidationResult } from './validation';
+import { CheckoutValidationContext } from '../../types/checkout';
 
 /**
  * Checkout flow state
@@ -471,6 +472,10 @@ export class CheckoutFlowManager {
           const payment = unwrap(paymentInit);
           return Ok({
             success: true,
+            newStep: this.flowState.currentStep,
+            previousStep: this.flowState.currentStep - 1,
+            errors: [],
+            blockers: [],
             orderId: createdOrder.id.toString(),
             redirectUrl: payment.redirectUrl,
             paymentStatus: 'pending',
@@ -722,14 +727,14 @@ export class CheckoutFlowManager {
         return Ok({});
       }
 
-      const paymentRequest = {
-        paymentMethodId: this.flowState.session.selectedPaymentMethod.id,
-        orderId: order.id,
-        amount: order.total,
-        currency: order.currency,
-        returnUrl: this.config.validationRules.returnUrl || '/checkout/success',
-        cancelUrl: this.config.validationRules.cancelUrl || '/checkout/cancel'
-      };
+              const paymentRequest = {
+          paymentMethodId: this.flowState.session.selectedPaymentMethod.id,
+          orderId: order.id.toString(),
+          amount: order.total,
+          currency: order.currency,
+          returnUrl: this.config.validationRules.returnUrl || '/checkout/success',
+          cancelUrl: this.config.validationRules.cancelUrl || '/checkout/cancel'
+        };
 
       const result = await this.paymentService.initializePayment(paymentRequest);
       if (isErr(result)) {
