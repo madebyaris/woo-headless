@@ -782,7 +782,11 @@ export class CartService {
             meta: existingItem.meta,
             attributes: existingItem.attributes,
             addedAt: existingItem.addedAt,
-            updatedAt: new Date()
+            updatedAt: new Date(),
+            backordersAllowed: existingItem.backordersAllowed,
+            soldIndividually: existingItem.soldIndividually,
+            downloadable: existingItem.downloadable,
+            virtual: existingItem.virtual
           };
 
           updatedItems = [...cart.items];
@@ -892,7 +896,11 @@ export class CartService {
         meta: item.meta,
         attributes: item.attributes,
         addedAt: item.addedAt,
-        updatedAt: new Date()
+        updatedAt: new Date(),
+        backordersAllowed: item.backordersAllowed,
+        soldIndividually: item.soldIndividually,
+        downloadable: item.downloadable,
+        virtual: item.virtual
       };
 
       const updatedItems = [...cart.items];

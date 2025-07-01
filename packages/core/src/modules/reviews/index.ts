@@ -21,24 +21,20 @@ import {
   ReviewStatus,
   ReviewSearchConfig,
   ReviewFilter,
-  ReviewSort,
-  ReviewImage,
-  ReviewRateLimit
+  ReviewImage
 } from '../../types/review';
-import { z } from 'zod';
-
 /**
  * Review validation schema
  */
-const CreateReviewSchema = z.object({
-  product_id: z.number().positive('Product ID must be positive'),
-  review: z.string().min(10, 'Review must be at least 10 characters').max(10000, 'Review too long'),
-  reviewer: z.string().min(1, 'Reviewer name required').max(100, 'Reviewer name too long'),
-  reviewer_email: z.string().email('Valid email required'),
-  rating: z.number().min(1, 'Rating must be 1-5').max(5, 'Rating must be 1-5').int('Rating must be integer'),
-  parent_id: z.number().positive().optional(),
-  images: z.array(z.union([z.instanceof(File), z.string().url()])).optional()
-});
+const CreateReviewSchema = {
+  product_id: { min: 1, type: 'number' },
+  review: { min: 10, max: 10000, type: 'string' },
+  reviewer: { min: 1, max: 100, type: 'string' },
+  reviewer_email: { type: 'email' },
+  rating: { min: 1, max: 5, type: 'number' },
+  parent_id: { type: 'number', optional: true },
+  images: { type: 'array', optional: true }
+};
 
 /**
  * Review service class with comprehensive functionality
@@ -105,7 +101,7 @@ export class ReviewService {
       };
 
       // Cache the result with TTL
-      await this.cache.set(cacheKey, result, { ttl: 300 }); // 5 minutes cache
+      await this.cache.set(cacheKey, result, 300); // 5 minutes cache
 
       return Ok(result);
     } catch (error) {
@@ -139,7 +135,7 @@ export class ReviewService {
 
       if (!response.success) {
         if (response.error.statusCode === 404) {
-          return Err(ErrorFactory.notFoundError('Review not found'));
+          return Err(ErrorFactory.validationError('Review not found'));
         }
         return response;
       }
@@ -147,7 +143,7 @@ export class ReviewService {
       const review = response.data.data;
 
       // Cache the result
-      await this.cache.set(cacheKey, review, { ttl: 600 }); // 10 minutes cache
+      await this.cache.set(cacheKey, review, 600); // 10 minutes cache
 
       return Ok(review);
     } catch (error) {
@@ -394,7 +390,7 @@ export class ReviewService {
       };
 
       // Cache analytics
-      await this.cache.set(cacheKey, analytics, { ttl: 3600 }); // 1 hour cache
+      await this.cache.set(cacheKey, analytics, 3600); // 1 hour cache
 
       return Ok(analytics);
     } catch (error) {
