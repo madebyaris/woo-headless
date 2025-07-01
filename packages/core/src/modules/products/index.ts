@@ -5,16 +5,14 @@
 
 import { HttpClient } from '../../core/client';
 import { CacheManager } from '../../core/cache';
-import { Result, Ok, Err, isOk } from '../../types/result';
+import { Result, Ok, Err } from '../../types/result';
 import { WooError, ErrorFactory } from '../../types/errors';
 import { 
   WooCommerceProduct, 
   ProductVariation,
-  ProductSchema,
-  isWooCommerceProduct 
+  ProductSchema
 } from '../../types/commerce';
 import { PaginationConfig, SortConfig, Filter } from '../../types/config';
-import { z } from 'zod';
 
 /**
  * Product list parameters

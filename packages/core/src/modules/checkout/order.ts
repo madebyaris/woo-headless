@@ -264,7 +264,7 @@ export class OrderProcessingService {
         return Err(unwrapErr(orderResult));
       }
 
-      const order = unwrap(orderResult);
+      unwrap(orderResult);
 
       // Update order with confirmation details
       const updateData: any = {

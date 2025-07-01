@@ -11,13 +11,14 @@ import {
   CheckoutStepType,
   CheckoutSession,
   CheckoutValidationRules,
+  OrderTotals,
   Order
 } from '../../types/checkout';
 import { Cart } from '../../types/cart';
 import { AddressManager } from './address';
 import { ShippingService } from './shipping';
 import { PaymentService } from './payment';
-import { CheckoutValidationService, CheckoutValidationContext, CheckoutValidationResult } from './validation';
+import { CheckoutValidationService, CheckoutValidationContext, CheckoutValidationResult as FlowValidationResult } from './validation';
 
 /**
  * Checkout flow state
@@ -29,7 +30,7 @@ export interface CheckoutFlowState {
   readonly canProceed: boolean;
   readonly canGoBack: boolean;
   readonly session: CheckoutSession;
-  readonly validationResult?: CheckoutValidationResult;
+  readonly validationResult?: FlowValidationResult;
 }
 
 /**
@@ -39,7 +40,7 @@ export interface StepTransitionResult {
   readonly success: boolean;
   readonly newStep: number;
   readonly previousStep: number;
-  readonly validationResult?: CheckoutValidationResult;
+  readonly validationResult?: FlowValidationResult;
   readonly errors: readonly string[];
   readonly blockers: readonly string[];
 }
@@ -114,12 +115,24 @@ export class CheckoutFlowManager {
   async initializeCheckout(cart: Cart, isGuestCheckout: boolean = false): Promise<Result<CheckoutFlowState, WooError>> {
     try {
       // Create initial checkout session
+      const orderTotals: OrderTotals = {
+        subtotal: cart.totals.subtotal,
+        tax: cart.totals.totalTax,
+        shipping: cart.totals.shippingTotal,
+        shippingTax: cart.totals.shippingTax,
+        discount: cart.totals.discountTotal,
+        fees: cart.totals.feeTotal,
+        feesTax: cart.totals.feeTax,
+        total: cart.totals.total,
+        currency: cart.currency
+      };
+
       const session: CheckoutSession = {
         id: this.sessionId,
-        cartId: cart.id,
+        cartId: cart.sessionId,
         isGuestCheckout,
-        orderTotals: cart.totals,
-        flow: createEmptyCheckoutFlow(),
+        orderTotals,
+        flow: this.createEmptyCheckoutFlow(),
         expiresAt: new Date(Date.now() + this.config.sessionTimeout * 60 * 1000),
         createdAt: new Date(),
         updatedAt: new Date()

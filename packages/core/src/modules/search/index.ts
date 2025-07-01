@@ -8,7 +8,7 @@ import { HttpClient } from '../../core/client';
 import { CacheManager } from '../../core/cache';
 import { Result, Ok, Err } from '../../types/result';
 import { WooError, ErrorFactory } from '../../types/errors';
-import { WooCommerceProduct, ProductSchema } from '../../types/commerce';
+import { WooCommerceProduct } from '../../types/commerce';
 import { AdvancedSearchConfig } from '../../types/config';
 import {
   SearchQuery,
@@ -31,8 +31,7 @@ import {
   SortDirection,
   SearchSort,
   SearchOperator,
-  SearchQuerySchema,
-  isSearchQuery
+  SearchQuerySchema
 } from '../../types/search';
 import { generateId } from '../../test/utils';
 

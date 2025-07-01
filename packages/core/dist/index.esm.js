@@ -2529,21 +2529,21 @@ class CartSyncManager {
    */
   async fetchServerCart(userId) {
     try {
-      const response = await this.httpClient.get(`/cart/sync/${userId}`);
-      if (response.status === 404) {
-        return Ok(null);
-      }
+      const response = await this.httpClient.get(`/cart/user/${userId}`);
       if (!response.success) {
+        if (response.error.message.includes("404") || response.error.message.includes("not found")) {
+          return Ok(null);
+        }
         return Err(ErrorFactory.cartError(
           "Failed to fetch server cart",
-          { status: response.status, error: response.error }
+          { userId, error: response.error }
         ));
       }
-      return Ok(response.data);
+      return Ok(response.data.data);
     } catch (error) {
       return Err(ErrorFactory.cartError(
-        "Network error while fetching server cart",
-        { error: error instanceof Error ? error.message : "Unknown error" }
+        "Network error fetching server cart",
+        { userId, error: error instanceof Error ? error.message : "Unknown error" }
       ));
     }
   }
@@ -2551,37 +2551,32 @@ class CartSyncManager {
    * Upload cart to server
    */
   async uploadCart(cart, authContext) {
-    if (!authContext.isAuthenticated || !authContext.userId) {
-      return Err(ErrorFactory.cartError(
-        "User must be authenticated to upload cart",
-        { context: "upload_cart" }
-      ));
-    }
-    const metadata = {
-      deviceId: this.deviceId,
-      lastSyncAt: /* @__PURE__ */ new Date(),
-      syncVersion: 1,
-      userId: authContext.userId,
-      sessionId: cart.sessionId,
-      source: "local"
-    };
-    const serverCartData = {
-      cart,
-      metadata
-    };
     try {
-      const response = await this.httpClient.put(`/cart/sync/${authContext.userId}`, serverCartData);
+      const metadata = {
+        deviceId: this.deviceId,
+        lastSyncAt: /* @__PURE__ */ new Date(),
+        syncVersion: 1,
+        userId: authContext.userId.toString(),
+        // Convert number to string
+        sessionId: cart.sessionId,
+        source: "local"
+      };
+      const serverCartData = {
+        cart,
+        metadata
+      };
+      const response = await this.httpClient.post(`/cart/user/${authContext.userId}`, serverCartData);
       if (!response.success) {
         return Err(ErrorFactory.cartError(
           "Failed to upload cart to server",
-          { status: response.status, error: response.error }
+          { userId: authContext.userId, error: response.error }
         ));
       }
       return Ok(void 0);
     } catch (error) {
       return Err(ErrorFactory.cartError(
-        "Network error while uploading cart",
-        { error: error instanceof Error ? error.message : "Unknown error" }
+        "Network error uploading cart",
+        { userId: authContext.userId, error: error instanceof Error ? error.message : "Unknown error" }
       ));
     }
   }
@@ -2861,7 +2856,7 @@ class CartPersistenceManager {
    */
   async save(cart) {
     try {
-      const serialized = JSON.stringify(cart, (key, value) => {
+      const serialized = JSON.stringify(cart, (_, value) => {
         if (value instanceof Date) {
           return value.toISOString();
         }
@@ -2924,7 +2919,7 @@ class CartPersistenceManager {
       if (!serialized) {
         return Ok(null);
       }
-      const parsed = JSON.parse(serialized, (key, value) => {
+      const parsed = JSON.parse(serialized, (_, value) => {
         if (typeof value === "string" && /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/.test(value)) {
           return new Date(value);
         }
@@ -3238,7 +3233,7 @@ class CartTotalsCalculator {
     }
     return true;
   }
-  calculateShipping(shippingMethods, cartTotal, customerData) {
+  calculateShipping(shippingMethods, _cartTotal, customerData) {
     if (!this.config.enableShipping || shippingMethods.length === 0) {
       return { shippingTotal: 0, shippingTax: 0 };
     }
@@ -3254,7 +3249,7 @@ class CartTotalsCalculator {
     }
     return { shippingTotal, shippingTax };
   }
-  calculateFees(fees, cartTotal, customerData) {
+  calculateFees(fees, _cartTotal, customerData) {
     if (!this.config.enableFees || fees.length === 0) {
       return { feeTotal: 0, feeTax: 0 };
     }
@@ -4002,15 +3997,15 @@ class CartService {
       const couponToApply = {
         code: validationResult.coupon.code,
         amount: parseFloat(validationResult.coupon.amount || "0"),
-        description: validationResult.coupon.description || "",
         discountType: validationResult.coupon.discount_type || "fixed_cart",
         freeShipping: validationResult.coupon.free_shipping || false,
-        minimumAmount: validationResult.coupon.minimum_amount ? parseFloat(validationResult.coupon.minimum_amount) : void 0,
-        maximumAmount: validationResult.coupon.maximum_amount ? parseFloat(validationResult.coupon.maximum_amount) : void 0,
         usageCount: validationResult.coupon.usage_count || 0,
-        usageLimit: validationResult.coupon.usage_limit || void 0,
-        ...validationResult.coupon.date_expires && { expiryDate: new Date(validationResult.coupon.date_expires) },
-        individualUse: validationResult.coupon.individual_use || false
+        individualUse: validationResult.coupon.individual_use || false,
+        ...validationResult.coupon.description && { description: validationResult.coupon.description },
+        ...validationResult.coupon.minimum_amount && { minimumAmount: parseFloat(validationResult.coupon.minimum_amount) },
+        ...validationResult.coupon.maximum_amount && { maximumAmount: parseFloat(validationResult.coupon.maximum_amount) },
+        ...validationResult.coupon.usage_limit && { usageLimit: validationResult.coupon.usage_limit },
+        ...validationResult.coupon.date_expires && { expiryDate: new Date(validationResult.coupon.date_expires) }
       };
       const appliedCoupons = [...cartData.appliedCoupons, couponToApply];
       const updatedTotals = this.calculator.calculate(
@@ -6155,7 +6150,6 @@ class DownloadManagementService {
       if (!fileStream.success) {
         return fileStream;
       }
-      const startTime = Date.now();
       await this.trackDownload({
         downloadId: permission.downloadId,
         customerId: permission.customerId,
@@ -9448,12 +9442,23 @@ class CheckoutFlowManager {
    */
   async initializeCheckout(cart, isGuestCheckout = false) {
     try {
+      const orderTotals = {
+        subtotal: cart.totals.subtotal,
+        tax: cart.totals.totalTax,
+        shipping: cart.totals.shippingTotal,
+        shippingTax: cart.totals.shippingTax,
+        discount: cart.totals.discountTotal,
+        fees: cart.totals.feeTotal,
+        feesTax: cart.totals.feeTax,
+        total: cart.totals.total,
+        currency: cart.currency
+      };
       const session = {
         id: this.sessionId,
-        cartId: cart.id,
+        cartId: cart.sessionId,
         isGuestCheckout,
-        orderTotals: cart.totals,
-        flow: createEmptyCheckoutFlow(),
+        orderTotals,
+        flow: this.createEmptyCheckoutFlow(),
         expiresAt: new Date(Date.now() + this.config.sessionTimeout * 60 * 1e3),
         createdAt: /* @__PURE__ */ new Date(),
         updatedAt: /* @__PURE__ */ new Date()
@@ -10130,7 +10135,7 @@ class OrderProcessingService {
       if (isErr(orderResult)) {
         return Err(unwrapErr(orderResult));
       }
-      const order = unwrap(orderResult);
+      unwrap(orderResult);
       const updateData = {
         status: "processing",
         transaction_id: request.transactionId,

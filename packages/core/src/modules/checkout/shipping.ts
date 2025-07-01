@@ -6,7 +6,7 @@
 
 import { HttpClient } from '../../core/client';
 import { CacheManager } from '../../core/cache';
-import { Result, Ok, Err, isErr, isOk, unwrap, unwrapErr } from '../../types/result';
+import { Result, Ok, Err, isErr, unwrap, unwrapErr } from '../../types/result';
 import { WooError, ErrorFactory } from '../../types/errors';
 import { 
   ShippingRate,

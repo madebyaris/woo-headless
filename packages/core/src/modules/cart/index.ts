@@ -46,7 +46,7 @@ class CartPersistenceManager {
    */
   async save(cart: Cart): Promise<Result<void, WooError>> {
     try {
-      const serialized = JSON.stringify(cart, (key, value) => {
+      const serialized = JSON.stringify(cart, (_, value) => {
         // Convert dates to ISO strings for serialization
         if (value instanceof Date) {
           return value.toISOString();
@@ -127,7 +127,7 @@ class CartPersistenceManager {
         return Ok(null);
       }
 
-      const parsed = JSON.parse(serialized, (key, value) => {
+      const parsed = JSON.parse(serialized, (_, value) => {
         // Convert ISO strings back to dates
         if (typeof value === 'string' && /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/.test(value)) {
           return new Date(value);
@@ -559,7 +559,7 @@ class CartTotalsCalculator {
 
   private calculateShipping(
     shippingMethods: readonly ShippingMethod[], 
-    cartTotal: number,
+    _cartTotal: number,
     customerData?: { taxRate?: number; country?: string; state?: string }
   ): { shippingTotal: number; shippingTax: number } {
     if (!this.config.enableShipping || shippingMethods.length === 0) {
@@ -585,7 +585,7 @@ class CartTotalsCalculator {
 
   private calculateFees(
     fees: readonly CartFee[], 
-    cartTotal: number,
+    _cartTotal: number,
     customerData?: { taxRate?: number; country?: string; state?: string }
   ): { feeTotal: number; feeTax: number } {
     if (!this.config.enableFees || fees.length === 0) {
@@ -1690,15 +1690,15 @@ export class CartService {
       const couponToApply: AppliedCoupon = {
         code: validationResult.coupon!.code,
         amount: parseFloat(validationResult.coupon!.amount || '0'),
-        description: validationResult.coupon!.description || '',
         discountType: validationResult.coupon!.discount_type || 'fixed_cart',
         freeShipping: validationResult.coupon!.free_shipping || false,
-        minimumAmount: validationResult.coupon!.minimum_amount ? parseFloat(validationResult.coupon!.minimum_amount) : undefined,
-        maximumAmount: validationResult.coupon!.maximum_amount ? parseFloat(validationResult.coupon!.maximum_amount) : undefined,
         usageCount: validationResult.coupon!.usage_count || 0,
-        usageLimit: validationResult.coupon!.usage_limit || undefined,
-        ...(validationResult.coupon!.date_expires && { expiryDate: new Date(validationResult.coupon!.date_expires) }),
-        individualUse: validationResult.coupon!.individual_use || false
+        individualUse: validationResult.coupon!.individual_use || false,
+        ...(validationResult.coupon!.description && { description: validationResult.coupon!.description }),
+        ...(validationResult.coupon!.minimum_amount && { minimumAmount: parseFloat(validationResult.coupon!.minimum_amount) }),
+        ...(validationResult.coupon!.maximum_amount && { maximumAmount: parseFloat(validationResult.coupon!.maximum_amount) }),
+        ...(validationResult.coupon!.usage_limit && { usageLimit: validationResult.coupon!.usage_limit }),
+        ...(validationResult.coupon!.date_expires && { expiryDate: new Date(validationResult.coupon!.date_expires) })
       };
       
       const appliedCoupons = [...cartData.appliedCoupons, couponToApply];

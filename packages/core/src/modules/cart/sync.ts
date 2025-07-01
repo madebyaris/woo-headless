@@ -38,14 +38,14 @@ export interface CartSyncQueueItem {
   readonly action: 'add' | 'update' | 'remove' | 'clear' | 'apply_coupon' | 'remove_coupon';
   readonly data: unknown;
   readonly timestamp: Date;
-  readonly retryCount: number;
+  retryCount: number;
 }
 
 /**
  * Cart synchronization manager
  */
 export class CartSyncManager {
-  private readonly config: CartSyncConfig;
+  private config: CartSyncConfig;
   private readonly httpClient: HttpClient;
   private readonly deviceId: string;
   
@@ -334,24 +334,23 @@ export class CartSyncManager {
    */
   private async fetchServerCart(userId: string): Promise<Result<ServerCartData | null, CartError>> {
     try {
-      const response = await this.httpClient.get(`/cart/sync/${userId}`);
+      const response = await this.httpClient.get<ServerCartData>(`/cart/user/${userId}`);
       
-      if (response.status === 404) {
-        return Ok(null); // No server cart exists
-      }
-
       if (!response.success) {
+        if (response.error.message.includes('404') || response.error.message.includes('not found')) {
+          return Ok(null); // No cart exists on server
+        }
         return Err(ErrorFactory.cartError(
           'Failed to fetch server cart',
-          { status: response.status, error: response.error }
+          { userId, error: response.error }
         ));
       }
 
-      return Ok(response.data as ServerCartData);
+      return Ok(response.data.data);
     } catch (error) {
       return Err(ErrorFactory.cartError(
-        'Network error while fetching server cart',
-        { error: error instanceof Error ? error.message : 'Unknown error' }
+        'Network error fetching server cart',
+        { userId, error: error instanceof Error ? error.message : 'Unknown error' }
       ));
     }
   }
@@ -363,42 +362,35 @@ export class CartSyncManager {
     cart: Cart,
     authContext: UserAuthContext
   ): Promise<Result<void, CartError>> {
-    if (!authContext.isAuthenticated || !authContext.userId) {
-      return Err(ErrorFactory.cartError(
-        'User must be authenticated to upload cart',
-        { context: 'upload_cart' }
-      ));
-    }
-
-    const metadata: CartSyncMetadata = {
-      deviceId: this.deviceId,
-      lastSyncAt: new Date(),
-      syncVersion: 1,
-      userId: authContext.userId,
-      sessionId: cart.sessionId,
-      source: 'local'
-    };
-
-    const serverCartData: ServerCartData = {
-      cart,
-      metadata
-    };
-
     try {
-      const response = await this.httpClient.put(`/cart/sync/${authContext.userId}`, serverCartData);
+      const metadata: CartSyncMetadata = {
+        deviceId: this.deviceId,
+        lastSyncAt: new Date(),
+        syncVersion: 1,
+        userId: authContext.userId.toString(), // Convert number to string
+        sessionId: cart.sessionId,
+        source: 'local'
+      };
+
+      const serverCartData: ServerCartData = {
+        cart,
+        metadata
+      };
+
+      const response = await this.httpClient.post(`/cart/user/${authContext.userId}`, serverCartData);
       
       if (!response.success) {
         return Err(ErrorFactory.cartError(
           'Failed to upload cart to server',
-          { status: response.status, error: response.error }
+          { userId: authContext.userId, error: response.error }
         ));
       }
 
       return Ok(undefined);
     } catch (error) {
       return Err(ErrorFactory.cartError(
-        'Network error while uploading cart',
-        { error: error instanceof Error ? error.message : 'Unknown error' }
+        'Network error uploading cart',
+        { userId: authContext.userId, error: error instanceof Error ? error.message : 'Unknown error' }
       ));
     }
   }

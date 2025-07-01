@@ -16,18 +16,15 @@ import {
   UserPreferences,
   UserOrderSummary,
   UserWishlist,
-  WishlistItem,
+
   UserActivity,
   UserAuthContext,
   UserSyncRequest,
   UserSyncResponse,
   UserUpdateRequest,
   AddressValidationResult,
-  UserListParams,
-  UserListResponse,
-  UserStats,
-  UserRole,
-  UserStatus,
+
+
   UserProfileSchema,
   UserAddressSchema,
   UserPreferencesSchema,

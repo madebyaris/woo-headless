@@ -442,7 +442,6 @@ export class DownloadManagementService {
       }
 
       // Track download start
-      const startTime = Date.now();
       await this.trackDownload({
         downloadId: permission.downloadId,
         customerId: permission.customerId,
